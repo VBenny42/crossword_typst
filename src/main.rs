@@ -2,7 +2,6 @@ use clap::Parser;
 use puz_parse::{parse_file, Puzzle};
 use std::{collections::HashMap, fs::File, str::FromStr};
 
-static INPUT_PUZZLE_PATH: &str = "assets/Newsday - 20260602 - 6226 TRACK'S ONE-TWO-THREE.puz";
 static JSON_OUTPUT_PATH: &str = "src/output.json";
 
 fn initialize_puzzle(file_path: &str) -> Result<Puzzle, Box<dyn std::error::Error>> {
@@ -42,6 +41,7 @@ struct CluesInfo {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 struct PuzzleState {
     puzzle: Puzzle,
     clues_info: CluesInfo,
@@ -330,19 +330,20 @@ fn solve_puzzle(state: &mut PuzzleState) -> Result<(), Box<dyn std::error::Error
                 let clue_number: u8 = input()?;
                 solve_clue(clue_number, "across", state)?;
 
-                write_puzzle_to_json(&state.puzzle, JSON_OUTPUT_PATH)?;
+                write_puzzle_to_json(&state.puzzle, &state.json_output_path)?;
             }
             Ok(2) => {
                 println!("You chose to solve a down clue. Please enter the clue number:");
                 let clue_number: u8 = input()?;
                 solve_clue(clue_number, "down", state)?;
 
-                write_puzzle_to_json(&state.puzzle, JSON_OUTPUT_PATH)?;
+                write_puzzle_to_json(&state.puzzle, &state.json_output_path)?;
             }
             Ok(3) => {
                 println!("Overwriting JSON file with blank puzzle data...");
-                let blank_puzzle = initialize_puzzle(INPUT_PUZZLE_PATH)?;
-                write_puzzle_to_json(&blank_puzzle, JSON_OUTPUT_PATH)?;
+                let blank_puzzle = initialize_puzzle(&state.puzzle_path)?;
+                write_puzzle_to_json(&blank_puzzle, &state.json_output_path)?;
+                state.puzzle.grid.blank = blank_puzzle.grid.blank.clone();
             }
             Ok(4) => {
                 println!("Current state of the puzzle:");
@@ -358,13 +359,13 @@ fn solve_puzzle(state: &mut PuzzleState) -> Result<(), Box<dyn std::error::Error
                 let direction: u8 = input()?;
                 remove_clue_answer(clue_number, direction, state)?;
 
-                write_puzzle_to_json(&state.puzzle, JSON_OUTPUT_PATH)?;
+                write_puzzle_to_json(&state.puzzle, &state.json_output_path)?;
             }
             Ok(6) => {
                 println!("Removing all wrong answers from the puzzle...");
                 remove_wrong_answers(state);
 
-                write_puzzle_to_json(&state.puzzle, JSON_OUTPUT_PATH)?;
+                write_puzzle_to_json(&state.puzzle, &state.json_output_path)?;
             }
             Ok(7) => {
                 println!("Exiting...");
@@ -397,6 +398,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         json_output_path: args.json_output_path.clone().unwrap(),
     };
 
+    println!("{} {}: {:?}", "LOG:", "state", state);
     match File::open(&state.json_output_path) {
         Ok(_) => {}
         Err(_) => {
@@ -406,6 +408,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let read_puzzle = read_puzzle_from_json(&state.json_output_path)?;
+
+    if read_puzzle.info.title != state.puzzle.info.title {
+        eprintln!("Warning: The puzzle title in the JSON file does not match the original puzzle. Overwriting JSON file with blank puzzle data...");
+        write_puzzle_to_json(&state.puzzle, &state.json_output_path)?;
+    }
+
     // println!("Read puzzle from JSON: {:?}", read_puzzle);
     state.puzzle.grid.blank = read_puzzle.grid.blank.clone();
 
