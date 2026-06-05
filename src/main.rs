@@ -181,9 +181,28 @@ fn solve_clue(
         _ => return Err("Invalid direction".into()),
     };
 
+    let clue_text = match direction {
+        "across" => state
+            .puzzle
+            .clues
+            .across
+            .get(&(number as u16))
+            .map(|s| s.as_str())
+            .unwrap_or("Unknown clue"),
+        "down" => state
+            .puzzle
+            .clues
+            .down
+            .get(&(number as u16))
+            .map(|s| s.as_str())
+            .unwrap_or("Unknown clue"),
+        _ => "Unknown clue",
+    };
+
     println!(
-        "Clue {} {} has length {} and starts at ({}, {}). Input your guess:",
-        number, direction, clue_info.length, clue_info.x, clue_info.y
+        // "Clue {} {} has length {}, with text {}. Input your guess:",
+        "{}. {} ({}), {}. Input your guess:",
+        number, clue_text, clue_info.length, direction
     );
 
     let guess = input::<String>()?.to_uppercase();
@@ -279,7 +298,9 @@ fn remove_clue_answer(
     Ok(())
 }
 
-fn remove_wrong_answers(state: &mut PuzzleState) {
+fn remove_wrong_answers(state: &mut PuzzleState) -> bool {
+    let old_blank = state.puzzle.grid.blank.clone();
+
     state.puzzle.grid.blank = state
         .puzzle
         .grid
@@ -299,6 +320,8 @@ fn remove_wrong_answers(state: &mut PuzzleState) {
                 .collect()
         })
         .collect();
+
+    old_blank == state.puzzle.grid.blank
 }
 
 fn print_puzzle(state: &PuzzleState) {
@@ -327,15 +350,39 @@ fn solve_puzzle(state: &mut PuzzleState) -> Result<(), Box<dyn std::error::Error
         match choice {
             Ok(1) => {
                 println!("You chose to solve an across clue. Please enter the clue number:");
-                let clue_number: u8 = input()?;
-                solve_clue(clue_number, "across", state)?;
+                let clue_number: u8 = match input() {
+                    Ok(num) => num,
+                    Err(e) => {
+                        println!("Invalid input, please enter a number. Error: {}", e);
+                        continue;
+                    }
+                };
+                match solve_clue(clue_number, "across", state) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("Error solving clue: {}", e);
+                        continue;
+                    }
+                }
 
                 write_puzzle_to_json(&state.puzzle, &state.json_output_path)?;
             }
             Ok(2) => {
                 println!("You chose to solve a down clue. Please enter the clue number:");
-                let clue_number: u8 = input()?;
-                solve_clue(clue_number, "down", state)?;
+                let clue_number: u8 = match input() {
+                    Ok(num) => num,
+                    Err(e) => {
+                        println!("Invalid input, please enter a number. Error: {}", e);
+                        continue;
+                    }
+                };
+                match solve_clue(clue_number, "down", state) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("Error solving clue: {}", e);
+                        continue;
+                    }
+                }
 
                 write_puzzle_to_json(&state.puzzle, &state.json_output_path)?;
             }
@@ -363,9 +410,13 @@ fn solve_puzzle(state: &mut PuzzleState) -> Result<(), Box<dyn std::error::Error
             }
             Ok(6) => {
                 println!("Removing all wrong answers from the puzzle...");
-                remove_wrong_answers(state);
-
-                write_puzzle_to_json(&state.puzzle, &state.json_output_path)?;
+                match remove_wrong_answers(state) {
+                    true => println!("No wrong answers to remove!"),
+                    false => {
+                        println!("Wrong answers found and removed.");
+                        write_puzzle_to_json(&state.puzzle, &state.json_output_path)?;
+                    }
+                }
             }
             Ok(7) => {
                 println!("Exiting...");
@@ -398,7 +449,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         json_output_path: args.json_output_path.clone().unwrap(),
     };
 
-    println!("{} {}: {:?}", "LOG:", "state", state);
     match File::open(&state.json_output_path) {
         Ok(_) => {}
         Err(_) => {
@@ -414,7 +464,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         write_puzzle_to_json(&state.puzzle, &state.json_output_path)?;
     }
 
-    // println!("Read puzzle from JSON: {:?}", read_puzzle);
     state.puzzle.grid.blank = read_puzzle.grid.blank.clone();
 
     solve_puzzle(&mut state)?;

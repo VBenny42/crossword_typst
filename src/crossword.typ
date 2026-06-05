@@ -1,7 +1,19 @@
 #set page(paper: "us-letter", margin: 0.5in)
 #set page(margin: (left: 0.25in, right: 0.25in, top: 0.5in, bottom: 0.5in))
-#set text(size: 14pt, font: "Helvetica")
-// #set text(size: 14pt, font: "Noto Sans Javanese")
+#set text(size: 14pt)
+// #set text(font: "Helvetica")
+#set text(font: "Arial")
+
+// // white and black colors
+// #let background_color = white
+// #let foreground_color = black
+
+// nord colors
+#let background_color = rgb("#2E3440")
+#let foreground_color = rgb("#D8DEE9")
+
+#set page(fill: background_color)
+#set text(fill: foreground_color)
 
 
 
@@ -70,18 +82,18 @@
 
           while x <= puzzle.info.width {
             let next_cell = puzzle_grid.at(y).clusters().at(x)
-            if next_cell == "." or x + 1 == puzzle.info.width {
-              word_solved = true
+            if next_cell == "-" or next_cell == " " {
               break
             }
-            if next_cell == "-" or next_cell == " " {
+            if next_cell == "." or x + 1 == puzzle.info.width {
+              word_solved = true
               break
             }
             x += 1
           }
 
           if word_solved {
-            strike(background: true, stroke: red, text(
+            strike(background: true, stroke: (paint: red, thickness: 2pt), text(
               size: 9pt,
             )[*#clue.at(0).* #clue.at(1)])
           } else {
@@ -109,9 +121,11 @@
                 box(
                   width: box_unit,
                   height: box_unit,
-                  fill: if cell == "." { black } else { white },
+                  fill: if cell == "." { foreground_color } else {
+                    background_color
+                  },
                   clip: true,
-                  stroke: (paint: black, thickness: 1pt),
+                  stroke: (paint: foreground_color, thickness: 1pt),
 
                   {
                     if num != none {
@@ -123,7 +137,11 @@
                     if cell != "." {
                       place(
                         horizon + center,
-                        text(if cell == "-" { "" } else { cell }),
+                        text(weight: "medium", size: 18pt, if cell == "-" {
+                          ""
+                        } else {
+                          cell
+                        }),
                       )
                     }
                   },
@@ -145,18 +163,18 @@
 
           while y <= puzzle.info.height {
             let next_cell = puzzle_grid.at(y).clusters().at(x)
-            if next_cell == "." or y + 1 == puzzle.info.height {
-              word_solved = true
+            if next_cell == "-" or next_cell == " " {
               break
             }
-            if next_cell == "-" or next_cell == " " {
+            if next_cell == "." or y + 1 == puzzle.info.height {
+              word_solved = true
               break
             }
             y += 1
           }
 
           if word_solved {
-            strike(background: true, stroke: red, text(
+            strike(background: true, stroke: (paint: red, thickness: 2pt), text(
               size: 9pt,
             )[*#clue.at(0).* #clue.at(1)])
           } else {
