@@ -1,0 +1,410 @@
+use puz_parse::{parse_file, Puzzle};
+use std::{collections::HashMap, error::Error, fs::File};
+
+use crate::{input, types};
+use types::{ClueInfo, CluesInfo, Direction, PuzzleState};
+
+impl PuzzleState {
+    pub fn new(puzzle_file_path: &str, json_output_path: &str) -> Result<Self, Box<dyn Error>> {
+        Ok(PuzzleState {
+            puzzle: initialize_puzzle(puzzle_file_path)?,
+            clues_info: extract_clue_info(&initialize_puzzle(puzzle_file_path)?)?,
+            puzzle_path: puzzle_file_path.to_string(),
+            json_output_path: json_output_path.to_string(),
+        })
+    }
+
+    pub fn read_puzzle_from_json(&self) -> Result<Puzzle, Box<dyn Error>> {
+        let file = File::open(&self.json_output_path)?;
+        let reader = std::io::BufReader::new(file);
+        let puzzle = serde_json::from_reader(reader)?;
+        Ok(puzzle)
+    }
+
+    pub fn write_puzzle_to_json(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let file = File::create(&self.json_output_path)?;
+        serde_json::to_writer(file, &self.puzzle)?;
+        Ok(())
+    }
+
+    fn print_puzzle(&self) {
+        for row in &self.puzzle.grid.blank {
+            println!("{row}");
+        }
+    }
+
+    fn remove_wrong_answers(&mut self) -> bool {
+        let old_blank = self.puzzle.grid.blank.clone();
+
+        self.puzzle.grid.blank = self
+            .puzzle
+            .grid
+            .blank
+            .iter()
+            .enumerate()
+            .map(|(y, row)| {
+                row.chars()
+                    .enumerate()
+                    .map(|(x, c)| {
+                        if self.puzzle.grid.solution[y].chars().nth(x).unwrap_or(' ') == c {
+                            c
+                        } else {
+                            ' '
+                        }
+                    })
+                    .collect()
+            })
+            .collect();
+
+        old_blank == self.puzzle.grid.blank
+    }
+
+    fn solve_clue(
+        &mut self,
+        number: u8,
+        direction: Direction,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let clue_info = match direction {
+            Direction::Across => self
+                .clues_info
+                .across
+                .get(&number)
+                .ok_or("Clue number not found in across clues")?,
+            Direction::Down => self
+                .clues_info
+                .down
+                .get(&number)
+                .ok_or("Clue number not found in down clues")?,
+        };
+
+        let clues = match direction {
+            Direction::Across => &self.puzzle.clues.across,
+            Direction::Down => &self.puzzle.clues.down,
+        };
+
+        let clue_text = clues
+            .get(&u16::from(number))
+            .map_or("Unknown clue", |s| s.as_str());
+
+        println!(
+            "{}. {} ({}), {}. Input your guess:",
+            number, clue_text, clue_info.length, direction
+        );
+
+        let guess = input::<String>()?.to_uppercase();
+
+        if guess.len() as u8 != clue_info.length {
+            println!(
+                "Your guess must be {} characters long. Please try again.",
+                clue_info.length
+            );
+            return Ok(());
+        }
+
+        self.puzzle.grid.blank = self
+            .puzzle
+            .grid
+            .blank
+            .iter()
+            .enumerate()
+            .map(|(y, row)| {
+                row.chars()
+                    .enumerate()
+                    .map(|(x, c)| {
+                        if direction == Direction::Across
+                            && y == clue_info.y as usize
+                            && x >= clue_info.x as usize
+                            && x < (clue_info.x + clue_info.length) as usize
+                        {
+                            guess.chars().nth(x - clue_info.x as usize).unwrap_or(c)
+                        } else if direction == Direction::Down
+                            && x == clue_info.x as usize
+                            && y >= clue_info.y as usize
+                            && y < (clue_info.y + clue_info.length) as usize
+                        {
+                            guess.chars().nth(y - clue_info.y as usize).unwrap_or(c)
+                        } else {
+                            c
+                        }
+                    })
+                    .collect()
+            })
+            .collect();
+
+        Ok(())
+    }
+
+    fn remove_clue_answer(
+        &mut self,
+        number: u8,
+        direction: Direction,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let clue_info = match direction {
+            Direction::Across => self
+                .clues_info
+                .across
+                .get(&number)
+                .ok_or("Clue number not found in across clues")?,
+            Direction::Down => self
+                .clues_info
+                .down
+                .get(&number)
+                .ok_or("Clue number not found in down clues")?,
+        };
+
+        self.puzzle.grid.blank = self
+            .puzzle
+            .grid
+            .blank
+            .iter()
+            .enumerate()
+            .map(|(y, row)| {
+                row.chars()
+                    .enumerate()
+                    .map(|(x, c)| {
+                        if (direction == Direction::Across
+                            && y == clue_info.y as usize
+                            && x >= clue_info.x as usize
+                            && x < (clue_info.x + clue_info.length) as usize)
+                            || (direction == Direction::Down
+                                && x == clue_info.x as usize
+                                && y >= clue_info.y as usize
+                                && y < (clue_info.y + clue_info.length) as usize)
+                        {
+                            ' '
+                        } else {
+                            c
+                        }
+                    })
+                    .collect()
+            })
+            .collect();
+
+        Ok(())
+    }
+
+    pub fn solve_puzzle(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        loop {
+            if self.puzzle.grid.blank == self.puzzle.grid.solution {
+                println!("Congratulations! You've solved the puzzle!");
+                break;
+            }
+
+            println!("Your choices are:");
+            println!("1. Solve an across clue");
+            println!("2. Solve a down clue");
+            println!("3. Overwrite JSON file with blank puzzle data");
+            println!("4. Print the current state of the puzzle");
+            println!("5. Remove a clue's answer from the puzzle");
+            println!("6. Remove all wrong answers from the puzzle");
+            println!("7. Exit");
+
+            let choice: Result<u8, _> = input();
+            match choice {
+                Ok(1) => {
+                    println!("You chose to solve an across clue. Please enter the clue number:");
+                    let clue_number: u8 = match input() {
+                        Ok(num) => num,
+                        Err(e) => {
+                            println!("Invalid input, please enter a number. Error: {}", e);
+                            continue;
+                        }
+                    };
+                    match self.solve_clue(clue_number, Direction::Across) {
+                        Ok(_) => {}
+                        Err(e) => {
+                            println!("Error solving clue: {}", e);
+                            continue;
+                        }
+                    }
+
+                    write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
+                }
+                Ok(2) => {
+                    println!("You chose to solve a down clue. Please enter the clue number:");
+                    let clue_number: u8 = match input() {
+                        Ok(num) => num,
+                        Err(e) => {
+                            println!("Invalid input, please enter a number. Error: {}", e);
+                            continue;
+                        }
+                    };
+                    match self.solve_clue(clue_number, Direction::Down) {
+                        Ok(_) => {}
+                        Err(e) => {
+                            println!("Error solving clue: {}", e);
+                            continue;
+                        }
+                    }
+
+                    write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
+                }
+                Ok(3) => {
+                    println!("Overwriting JSON file with blank puzzle data...");
+                    let blank_puzzle = initialize_puzzle(&self.puzzle_path)?;
+                    write_puzzle_to_json(&blank_puzzle, &self.json_output_path)?;
+                    self.puzzle.grid.blank = blank_puzzle.grid.blank.clone();
+                }
+                Ok(4) => {
+                    println!("Current state of the puzzle:");
+                    self.print_puzzle();
+                }
+                Ok(5) => {
+                    println!("You chose to remove a clue's answer. Please enter the clue number:");
+                    let clue_number: u8 = input()?;
+
+                    println!("1. Remove an across clue");
+                    println!("2. Remove a down clue");
+
+                    let direction = match input()? {
+                        1 => Direction::Across,
+                        2 => Direction::Down,
+                        _ => {
+                            println!("Invalid input, please enter 1 or 2");
+                            continue;
+                        }
+                    };
+
+                    self.remove_clue_answer(clue_number, direction)?;
+
+                    write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
+                }
+                Ok(6) => {
+                    println!("Removing all wrong answers from the puzzle...");
+                    match self.remove_wrong_answers() {
+                        true => println!("No wrong answers to remove!"),
+                        false => {
+                            println!("Wrong answers found and removed.");
+                            write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
+                        }
+                    }
+                }
+                Ok(7) => {
+                    println!("Exiting...");
+                    break;
+                }
+                Ok(_) => println!("Invalid choice, please try again."),
+                Err(e) => println!("Invalid input, please enter a number. Error: {}", e),
+            }
+        }
+
+        Ok(())
+    }
+}
+
+fn initialize_puzzle(file_path: &str) -> Result<Puzzle, Box<dyn std::error::Error>> {
+    let puzzle = parse_file(file_path)?;
+    Ok(puzzle)
+}
+
+fn write_puzzle_to_json(
+    puzzle: &Puzzle,
+    output_path: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let file = File::create(output_path)?;
+    serde_json::to_writer(file, puzzle)?;
+    Ok(())
+}
+
+fn extract_clue_info(puzzle: &Puzzle) -> Result<CluesInfo, Box<dyn std::error::Error>> {
+    let mut across_clues = HashMap::new();
+    let mut down_clues = HashMap::new();
+
+    let mut clue_number = 1;
+
+    for y in 0..puzzle.info.height {
+        for x in 0..puzzle.info.width {
+            let cell = puzzle.grid.blank[y as usize]
+                .chars()
+                .nth(x as usize)
+                .unwrap_or(' ');
+
+            if cell == '.' {
+                continue; // Skip black squares
+            }
+            let mut is_clue_start = false;
+
+            // Check for across clue
+            if (x == 0
+                || puzzle.grid.blank[y as usize]
+                    .chars()
+                    .nth((x - 1) as usize)
+                    .unwrap_or(' ')
+                    == '.')
+                && (x + 1 < puzzle.info.width
+                    && puzzle.grid.blank[y as usize]
+                        .chars()
+                        .nth((x + 1) as usize)
+                        .unwrap_or(' ')
+                        != '.')
+            {
+                let clue_length = (0..)
+                    .take_while(|i| {
+                        x + *i < puzzle.info.width
+                            && puzzle.grid.blank[y as usize]
+                                .chars()
+                                .nth((x + *i) as usize)
+                                .unwrap_or(' ')
+                                != '.'
+                    })
+                    .count() as u8;
+
+                is_clue_start = true;
+
+                across_clues.insert(
+                    clue_number,
+                    ClueInfo {
+                        length: clue_length,
+                        x,
+                        y,
+                    },
+                );
+            }
+            // Check for down clue
+            if (y == 0
+                || puzzle.grid.blank[(y - 1) as usize]
+                    .chars()
+                    .nth(x as usize)
+                    .unwrap_or(' ')
+                    == '.')
+                && (y + 1 < puzzle.info.height
+                    && puzzle.grid.blank[(y + 1) as usize]
+                        .chars()
+                        .nth(x as usize)
+                        .unwrap_or(' ')
+                        != '.')
+            {
+                let clue_length = (0..)
+                    .take_while(|i| {
+                        y + *i < puzzle.info.height
+                            && puzzle.grid.blank[(y + *i) as usize]
+                                .chars()
+                                .nth(x as usize)
+                                .unwrap_or(' ')
+                                != '.'
+                    })
+                    .count() as u8;
+
+                is_clue_start = true;
+
+                down_clues.insert(
+                    clue_number,
+                    ClueInfo {
+                        length: clue_length,
+                        x,
+                        y,
+                    },
+                );
+            }
+
+            if is_clue_start {
+                clue_number += 1;
+            }
+        }
+    }
+
+    Ok(CluesInfo {
+        across: across_clues,
+        down: down_clues,
+    })
+}
