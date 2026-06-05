@@ -8,7 +8,7 @@ impl PuzzleState {
     pub fn new(puzzle_file_path: &str, json_output_path: &str) -> Result<Self, Box<dyn Error>> {
         Ok(PuzzleState {
             puzzle: initialize_puzzle(puzzle_file_path)?,
-            clues_info: extract_clue_info(&initialize_puzzle(puzzle_file_path)?)?,
+            clues_info: extract_clue_info(&initialize_puzzle(puzzle_file_path)?),
             puzzle_path: puzzle_file_path.to_string(),
             json_output_path: json_output_path.to_string(),
         })
@@ -206,14 +206,14 @@ impl PuzzleState {
                     let clue_number: u8 = match input() {
                         Ok(num) => num,
                         Err(e) => {
-                            println!("Invalid input, please enter a number. Error: {}", e);
+                            println!("Invalid input, please enter a number. Error: {e}");
                             continue;
                         }
                     };
                     match self.solve_clue(clue_number, Direction::Across) {
-                        Ok(_) => {}
+                        Ok(()) => {}
                         Err(e) => {
-                            println!("Error solving clue: {}", e);
+                            println!("Error solving clue: {e}");
                             continue;
                         }
                     }
@@ -225,14 +225,14 @@ impl PuzzleState {
                     let clue_number: u8 = match input() {
                         Ok(num) => num,
                         Err(e) => {
-                            println!("Invalid input, please enter a number. Error: {}", e);
+                            println!("Invalid input, please enter a number. Error: {e}");
                             continue;
                         }
                     };
                     match self.solve_clue(clue_number, Direction::Down) {
-                        Ok(_) => {}
+                        Ok(()) => {}
                         Err(e) => {
-                            println!("Error solving clue: {}", e);
+                            println!("Error solving clue: {e}");
                             continue;
                         }
                     }
@@ -243,7 +243,7 @@ impl PuzzleState {
                     println!("Overwriting JSON file with blank puzzle data...");
                     let blank_puzzle = initialize_puzzle(&self.puzzle_path)?;
                     write_puzzle_to_json(&blank_puzzle, &self.json_output_path)?;
-                    self.puzzle.grid.blank = blank_puzzle.grid.blank.clone();
+                    self.puzzle.grid.blank.clone_from(&blank_puzzle.grid.blank);
                 }
                 Ok(4) => {
                     println!("Current state of the puzzle:");
@@ -271,12 +271,11 @@ impl PuzzleState {
                 }
                 Ok(6) => {
                     println!("Removing all wrong answers from the puzzle...");
-                    match self.remove_wrong_answers() {
-                        true => println!("No wrong answers to remove!"),
-                        false => {
-                            println!("Wrong answers found and removed.");
-                            write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
-                        }
+                    if self.remove_wrong_answers() {
+                        println!("No wrong answers to remove!");
+                    } else {
+                        println!("Wrong answers found and removed.");
+                        write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
                     }
                 }
                 Ok(7) => {
@@ -284,7 +283,7 @@ impl PuzzleState {
                     break;
                 }
                 Ok(_) => println!("Invalid choice, please try again."),
-                Err(e) => println!("Invalid input, please enter a number. Error: {}", e),
+                Err(e) => println!("Invalid input, please enter a number. Error: {e}"),
             }
         }
 
@@ -306,7 +305,7 @@ fn write_puzzle_to_json(
     Ok(())
 }
 
-fn extract_clue_info(puzzle: &Puzzle) -> Result<CluesInfo, Box<dyn std::error::Error>> {
+fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
     let mut across_clues = HashMap::new();
     let mut down_clues = HashMap::new();
 
@@ -403,8 +402,8 @@ fn extract_clue_info(puzzle: &Puzzle) -> Result<CluesInfo, Box<dyn std::error::E
         }
     }
 
-    Ok(CluesInfo {
+    CluesInfo {
         across: across_clues,
         down: down_clues,
-    })
+    }
 }
