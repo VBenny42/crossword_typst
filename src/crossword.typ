@@ -7,10 +7,13 @@
 // // white and black colors
 // #let background_color = white
 // #let foreground_color = black
+// #let red_color = red
 
 // nord colors
 #let background_color = rgb("#2E3440")
 #let foreground_color = rgb("#D8DEE9")
+#let red_color = rgb("#81A1C1")
+// #let red_color = rgb("#BF616A")
 
 #set page(fill: background_color)
 #set text(fill: foreground_color)
@@ -20,16 +23,10 @@
 #let crossword(puzzle) = {
   let puzzle_grid = puzzle.grid.at("blank")
 
-  set page(
-    header: if puzzle_grid == puzzle.grid.at("solution") {
-      [#puzzle.info.title #h(1fr) _Finished_]
-    } else {
-      puzzle.info.title
-    },
-    footer: puzzle.info.author,
-  )
-
   let box_unit = 0.40in
+
+  let wrong_letter_exists = false
+  let space_exists = false
 
   // Build a dict of "x,y" -> clue number
   let number_to_coord = (:)
@@ -39,6 +36,17 @@
     for x in range(puzzle.info.width) {
       let cell = puzzle_grid.at(y).clusters().at(x)
       if cell == "." { continue }
+
+      let solution_cell = puzzle.grid.solution.at(y).clusters().at(x)
+
+      if cell == " " or cell == "-" {
+        space_exists = true
+      }
+
+      if cell != " " and cell != "-" and cell != solution_cell {
+        wrong_letter_exists = true
+      }
+
       let starts-across = (
         (x == 0 or puzzle_grid.at(y).clusters().at(x - 1) == ".")
           and (
@@ -60,6 +68,21 @@
       }
     }
   }
+
+  set page(
+    header: if not space_exists and not wrong_letter_exists {
+      [#puzzle.info.title #h(1fr) _Finished_]
+    } else if wrong_letter_exists == true {
+      [#puzzle.info.title #h(1fr) #text(
+          fill: red_color,
+          weight: "bold",
+          "WRONG GUESS EXISTS",
+        )]
+    } else {
+      puzzle.info.title
+    },
+    footer: puzzle.info.author,
+  )
 
   let sorted_across = puzzle
     .clues
@@ -100,9 +123,13 @@
           }
 
           if word_solved {
-            strike(background: true, stroke: (paint: red, thickness: 2pt), text(
-              size: 9pt,
-            )[*#clue.at(0).* #clue.at(1)])
+            strike(
+              background: true,
+              stroke: (paint: red_color, thickness: 2pt),
+              text(
+                size: 9pt,
+              )[*#clue.at(0).* #clue.at(1)],
+            )
           } else {
             text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
           }
@@ -185,7 +212,7 @@
           if word_solved {
             strike(
               background: true,
-              stroke: (paint: red, thickness: 2pt),
+              stroke: (paint: red_color, thickness: 2pt),
               clue_text,
             )
           } else {
