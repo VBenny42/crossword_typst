@@ -1,4 +1,4 @@
-#set page(paper: "us-letter", margin: 0.5in)
+#set page(paper: "us-letter")
 #set page(margin: (left: 0.25in, right: 0.25in, top: 0.5in, bottom: 0.5in))
 #set text(size: 14pt)
 // #set text(font: "Helvetica")
@@ -18,11 +18,18 @@
 
 
 #let crossword(puzzle) = {
-  set page(header: puzzle.info.title, footer: puzzle.info.author)
+  let puzzle_grid = puzzle.grid.at("blank")
+
+  set page(
+    header: if puzzle_grid == puzzle.grid.at("solution") {
+      [#puzzle.info.title #h(1fr) _Finished_]
+    } else {
+      puzzle.info.title
+    },
+    footer: puzzle.info.author,
+  )
 
   let box_unit = 0.40in
-
-  let puzzle_grid = puzzle.grid.at("blank")
 
   // Build a dict of "x,y" -> clue number
   let number_to_coord = (:)
@@ -173,12 +180,16 @@
             y += 1
           }
 
+          let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
+
           if word_solved {
-            strike(background: true, stroke: (paint: red, thickness: 2pt), text(
-              size: 9pt,
-            )[*#clue.at(0).* #clue.at(1)])
+            strike(
+              background: true,
+              stroke: (paint: red, thickness: 2pt),
+              clue_text,
+            )
           } else {
-            text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
+            clue_text
           }
           linebreak()
         }
