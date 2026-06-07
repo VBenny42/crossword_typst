@@ -110,7 +110,7 @@ impl PuzzleState {
         };
 
         println!(
-            "{}. {} ({}), {} {word_so_far}. Input your guess:",
+            "{}. {} ({}), {}. `{word_so_far}` Input your guess:",
             number, clue_text, clue_info.length, direction
         );
 
@@ -360,7 +360,7 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                         .unwrap_or(BLANK_CELL)
                         != BLACK_CELL)
             {
-                let clue_length = (0..)
+                let clue_length = (0..puzzle.info.width)
                     .take_while(|i| {
                         x + *i < puzzle.info.width
                             && puzzle.grid.blank[y as usize]
@@ -396,7 +396,7 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                         .unwrap_or(BLANK_CELL)
                         != BLACK_CELL)
             {
-                let clue_length = (0..)
+                let clue_length = (0..puzzle.info.height)
                     .take_while(|i| {
                         y + *i < puzzle.info.height
                             && puzzle.grid.blank[(y + *i) as usize]

@@ -24,7 +24,7 @@ pub struct PuzzleState {
     pub json_output_path: String,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Direction {
     Across,
     Down,
