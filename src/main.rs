@@ -44,9 +44,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if read_puzzle.info.title != state.puzzle.info.title {
         eprintln!("Warning: The puzzle title in the JSON file does not match the original puzzle. Overwriting JSON file with blank puzzle data...");
         state.write_puzzle_to_json()?;
+    } else {
+        state.puzzle.grid.blank.clone_from(&read_puzzle.grid.blank);
     }
-
-    state.puzzle.grid.blank.clone_from(&read_puzzle.grid.blank);
 
     state.solve_puzzle()?;
 

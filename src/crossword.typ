@@ -23,7 +23,9 @@
 #let crossword(puzzle) = {
   let puzzle_grid = puzzle.grid.at("blank")
 
-  let box_unit = 0.40in
+  // Allotted space should be 3/4 of usable page width
+  let puzzle_width = (8.5in - 0.5in) * (3 / 4)
+  let box_unit = puzzle_width / puzzle.info.width
 
   let wrong_letter_exists = false
   let space_exists = false
@@ -96,51 +98,89 @@
     .pairs()
     .sorted(key: clue => int(clue.at(0))) // sort by clue number
 
+  let across_clues = [
+    ==== Across
+    #for clue in sorted_across {
+      let clue_num = clue.at(0)
+
+      let clue_coord = coord_to_number.at(clue_num, default: none)
+      let word_solved = false
+      let (x, y) = clue_coord
+
+      while x <= puzzle.info.width {
+        let next_cell = puzzle_grid.at(y).clusters().at(x)
+        if next_cell == "-" or next_cell == " " {
+          break
+        }
+        if next_cell == "." or x + 1 == puzzle.info.width {
+          word_solved = true
+          break
+        }
+        x += 1
+      }
+
+      if word_solved {
+        strike(
+          background: true,
+          stroke: (paint: red_color, thickness: 2pt),
+          text(
+            size: 9pt,
+          )[*#clue.at(0).* #clue.at(1)],
+        )
+      } else {
+        text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
+      }
+      linebreak()
+    }
+  ]
+
+  let down_clues = [
+    ==== Down
+    #for clue in sorted_down {
+      let clue_num = clue.at(0)
+
+      let clue_coord = coord_to_number.at(clue_num, default: none)
+      let word_solved = false
+      let (x, y) = clue_coord
+
+      while y <= puzzle.info.height {
+        let next_cell = puzzle_grid.at(y).clusters().at(x)
+        if next_cell == "-" or next_cell == " " {
+          break
+        }
+        if next_cell == "." or y + 1 == puzzle.info.height {
+          word_solved = true
+          break
+        }
+        y += 1
+      }
+
+      let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
+
+      if word_solved {
+        strike(
+          background: true,
+          stroke: (paint: red_color, thickness: 2pt),
+          clue_text,
+        )
+      } else {
+        clue_text
+      }
+      linebreak()
+    }
+  ]
+
   grid(
     columns: (1fr, 3fr),
     gutter: 0in,
 
     {
-      [
-        ==== Across
-        #for clue in sorted_across {
-          let clue_num = clue.at(0)
-
-          let clue_coord = coord_to_number.at(clue_num, default: none)
-          let word_solved = false
-          let (x, y) = clue_coord
-
-          while x <= puzzle.info.width {
-            let next_cell = puzzle_grid.at(y).clusters().at(x)
-            if next_cell == "-" or next_cell == " " {
-              break
-            }
-            if next_cell == "." or x + 1 == puzzle.info.width {
-              word_solved = true
-              break
-            }
-            x += 1
-          }
-
-          if word_solved {
-            strike(
-              background: true,
-              stroke: (paint: red_color, thickness: 2pt),
-              text(
-                size: 9pt,
-              )[*#clue.at(0).* #clue.at(1)],
-            )
-          } else {
-            text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
-          }
-          linebreak()
-        }
-      ]
+      across_clues
     },
 
     {
       align(
-        left,
+        center,
         grid(
           columns: range(puzzle.info.width).map(_ => box_unit),
           rows: range(puzzle.info.height).map(_ => box_unit),
@@ -163,15 +203,21 @@
 
                   {
                     if num != none {
-                      place(top + left, dx: 2pt, dy: 2pt, text(
-                        size: 6pt,
-                        str(num),
-                      ))
+                      place(
+                        top + left,
+                        dx: box_unit * 0.05,
+                        dy: box_unit * 0.05,
+                        text(
+                          size: box_unit * 0.15,
+                          str(num),
+                        ),
+                      )
                     }
                     if cell != "." {
                       place(
                         horizon + center,
-                        text(weight: "medium", size: 18pt, if cell == "-" {
+                        text(weight: "medium", size: box_unit * 0.625, if cell
+                          == "-" {
                           ""
                         } else {
                           cell
@@ -186,41 +232,7 @@
         ),
       )
 
-      columns(3)[
-        ==== Down
-        #for clue in sorted_down {
-          let clue_num = clue.at(0)
-
-          let clue_coord = coord_to_number.at(clue_num, default: none)
-          let word_solved = false
-          let (x, y) = clue_coord
-
-          while y <= puzzle.info.height {
-            let next_cell = puzzle_grid.at(y).clusters().at(x)
-            if next_cell == "-" or next_cell == " " {
-              break
-            }
-            if next_cell == "." or y + 1 == puzzle.info.height {
-              word_solved = true
-              break
-            }
-            y += 1
-          }
-
-          let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
-
-          if word_solved {
-            strike(
-              background: true,
-              stroke: (paint: red_color, thickness: 2pt),
-              clue_text,
-            )
-          } else {
-            clue_text
-          }
-          linebreak()
-        }
-      ]
+      columns(3)[#down_clues]
     },
   )
 }
