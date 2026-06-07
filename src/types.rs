@@ -5,9 +5,9 @@ use puz_parse::Puzzle;
 
 #[derive(Debug)]
 pub struct ClueInfo {
-    pub length: u8,
-    pub x: u8,
-    pub y: u8,
+    pub length: usize,
+    pub x: usize,
+    pub y: usize,
 }
 
 #[derive(Debug)]

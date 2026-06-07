@@ -1,5 +1,5 @@
+#![warn(clippy::pedantic)]
 use clap::Parser;
-
 use std::{fs::File, str::FromStr};
 
 use crate::types::PuzzleState;
@@ -41,11 +41,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let read_puzzle = state.read_puzzle_from_json()?;
 
-    if read_puzzle.info.title != state.puzzle.info.title {
+    if read_puzzle.info.title == state.puzzle.info.title {
+        state.puzzle.grid.blank.clone_from(&read_puzzle.grid.blank);
+    } else {
         eprintln!("Warning: The puzzle title in the JSON file does not match the original puzzle. Overwriting JSON file with blank puzzle data...");
         state.write_puzzle_to_json()?;
-    } else {
-        state.puzzle.grid.blank.clone_from(&read_puzzle.grid.blank);
     }
 
     state.solve_puzzle()?;

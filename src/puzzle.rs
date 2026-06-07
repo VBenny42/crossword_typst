@@ -4,8 +4,8 @@ use std::{collections::HashMap, error::Error, fs::File};
 use crate::{input, types};
 use types::{ClueInfo, CluesInfo, Direction, PuzzleState};
 
-static BLANK_CELL: char = '-';
-static BLACK_CELL: char = '.';
+const BLANK_CELL: char = '-';
+const BLACK_CELL: char = '.';
 
 impl PuzzleState {
     pub fn new(puzzle_file_path: &str, json_output_path: &str) -> Result<Self, Box<dyn Error>> {
@@ -94,14 +94,29 @@ impl PuzzleState {
             .get(&u16::from(number))
             .map_or("Unknown clue", |s| s.as_str());
 
+        let word_so_far: String = match direction {
+            Direction::Across => self.puzzle.grid.blank[clue_info.y]
+                [clue_info.x..(clue_info.x + clue_info.length)]
+                .to_string(),
+            Direction::Down => self
+                .puzzle
+                .grid
+                .blank
+                .iter()
+                .skip(clue_info.y)
+                .take(clue_info.length)
+                .map(|row| row.chars().nth(clue_info.x).unwrap_or(BLANK_CELL))
+                .collect(),
+        };
+
         println!(
-            "{}. {} ({}), {}. Input your guess:",
+            "{}. {} ({}), {} {word_so_far}. Input your guess:",
             number, clue_text, clue_info.length, direction
         );
 
         let guess = input::<String>()?.to_uppercase();
 
-        if guess.len() as u8 != clue_info.length {
+        if guess.len() != clue_info.length {
             println!(
                 "Your guess must be {} characters long. Please try again.",
                 clue_info.length
@@ -120,17 +135,17 @@ impl PuzzleState {
                     .enumerate()
                     .map(|(x, c)| {
                         if direction == Direction::Across
-                            && y == clue_info.y as usize
-                            && x >= clue_info.x as usize
-                            && x < (clue_info.x + clue_info.length) as usize
+                            && y == clue_info.y
+                            && x >= clue_info.x
+                            && x < (clue_info.x + clue_info.length)
                         {
-                            guess.chars().nth(x - clue_info.x as usize).unwrap_or(c)
+                            guess.chars().nth(x - clue_info.x).unwrap_or(c)
                         } else if direction == Direction::Down
-                            && x == clue_info.x as usize
-                            && y >= clue_info.y as usize
-                            && y < (clue_info.y + clue_info.length) as usize
+                            && x == clue_info.x
+                            && y >= clue_info.y
+                            && y < (clue_info.y + clue_info.length)
                         {
-                            guess.chars().nth(y - clue_info.y as usize).unwrap_or(c)
+                            guess.chars().nth(y - clue_info.y).unwrap_or(c)
                         } else {
                             c
                         }
@@ -171,13 +186,13 @@ impl PuzzleState {
                     .enumerate()
                     .map(|(x, c)| {
                         if (direction == Direction::Across
-                            && y == clue_info.y as usize
-                            && x >= clue_info.x as usize
-                            && x < (clue_info.x + clue_info.length) as usize)
+                            && y == clue_info.y
+                            && x >= clue_info.x
+                            && x < (clue_info.x + clue_info.length))
                             || (direction == Direction::Down
-                                && x == clue_info.x as usize
-                                && y >= clue_info.y as usize
-                                && y < (clue_info.y + clue_info.length) as usize)
+                                && x == clue_info.x
+                                && y >= clue_info.y
+                                && y < (clue_info.y + clue_info.length))
                         {
                             BLANK_CELL
                         } else {
@@ -354,7 +369,7 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                                 .unwrap_or(BLANK_CELL)
                                 != BLACK_CELL
                     })
-                    .count() as u8;
+                    .count();
 
                 is_clue_start = true;
 
@@ -362,8 +377,8 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                     clue_number,
                     ClueInfo {
                         length: clue_length,
-                        x,
-                        y,
+                        x: x as usize,
+                        y: y as usize,
                     },
                 );
             }
@@ -390,7 +405,7 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                                 .unwrap_or(BLANK_CELL)
                                 != BLACK_CELL
                     })
-                    .count() as u8;
+                    .count();
 
                 is_clue_start = true;
 
@@ -398,8 +413,8 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                     clue_number,
                     ClueInfo {
                         length: clue_length,
-                        x,
-                        y,
+                        x: x as usize,
+                        y: y as usize,
                     },
                 );
             }
