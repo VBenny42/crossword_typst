@@ -4,6 +4,9 @@ use std::{collections::HashMap, error::Error, fs::File};
 use crate::{input, types};
 use types::{ClueInfo, CluesInfo, Direction, PuzzleState};
 
+static BLANK_CELL: char = '-';
+static BLACK_CELL: char = '.';
+
 impl PuzzleState {
     pub fn new(puzzle_file_path: &str, json_output_path: &str) -> Result<Self, Box<dyn Error>> {
         Ok(PuzzleState {
@@ -46,10 +49,15 @@ impl PuzzleState {
                 row.chars()
                     .enumerate()
                     .map(|(x, c)| {
-                        if self.puzzle.grid.solution[y].chars().nth(x).unwrap_or(' ') == c {
+                        if self.puzzle.grid.solution[y]
+                            .chars()
+                            .nth(x)
+                            .unwrap_or(BLANK_CELL)
+                            == c
+                        {
                             c
                         } else {
-                            ' '
+                            BLANK_CELL
                         }
                     })
                     .collect()
@@ -171,7 +179,7 @@ impl PuzzleState {
                                 && y >= clue_info.y as usize
                                 && y < (clue_info.y + clue_info.length) as usize)
                         {
-                            ' '
+                            BLANK_CELL
                         } else {
                             c
                         }
@@ -316,9 +324,9 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
             let cell = puzzle.grid.blank[y as usize]
                 .chars()
                 .nth(x as usize)
-                .unwrap_or(' ');
+                .unwrap_or(BLANK_CELL);
 
-            if cell == '.' {
+            if cell == BLACK_CELL {
                 continue; // Skip black squares
             }
             let mut is_clue_start = false;
@@ -328,14 +336,14 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                 || puzzle.grid.blank[y as usize]
                     .chars()
                     .nth((x - 1) as usize)
-                    .unwrap_or(' ')
-                    == '.')
+                    .unwrap_or(BLANK_CELL)
+                    == BLACK_CELL)
                 && (x + 1 < puzzle.info.width
                     && puzzle.grid.blank[y as usize]
                         .chars()
                         .nth((x + 1) as usize)
-                        .unwrap_or(' ')
-                        != '.')
+                        .unwrap_or(BLANK_CELL)
+                        != BLACK_CELL)
             {
                 let clue_length = (0..)
                     .take_while(|i| {
@@ -343,8 +351,8 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                             && puzzle.grid.blank[y as usize]
                                 .chars()
                                 .nth((x + *i) as usize)
-                                .unwrap_or(' ')
-                                != '.'
+                                .unwrap_or(BLANK_CELL)
+                                != BLACK_CELL
                     })
                     .count() as u8;
 
@@ -364,14 +372,14 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                 || puzzle.grid.blank[(y - 1) as usize]
                     .chars()
                     .nth(x as usize)
-                    .unwrap_or(' ')
-                    == '.')
+                    .unwrap_or(BLANK_CELL)
+                    == BLACK_CELL)
                 && (y + 1 < puzzle.info.height
                     && puzzle.grid.blank[(y + 1) as usize]
                         .chars()
                         .nth(x as usize)
-                        .unwrap_or(' ')
-                        != '.')
+                        .unwrap_or(BLANK_CELL)
+                        != BLACK_CELL)
             {
                 let clue_length = (0..)
                     .take_while(|i| {
@@ -379,8 +387,8 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                             && puzzle.grid.blank[(y + *i) as usize]
                                 .chars()
                                 .nth(x as usize)
-                                .unwrap_or(' ')
-                                != '.'
+                                .unwrap_or(BLANK_CELL)
+                                != BLACK_CELL
                     })
                     .count() as u8;
 

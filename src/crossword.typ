@@ -18,7 +18,8 @@
 #set page(fill: background_color)
 #set text(fill: foreground_color)
 
-
+#let BLANK_CELL = "-"
+#let BLACK_CELL = "."
 
 #let crossword(puzzle) = {
   let puzzle_grid = puzzle.grid.at("blank")
@@ -37,30 +38,30 @@
   for y in range(puzzle.info.height) {
     for x in range(puzzle.info.width) {
       let cell = puzzle_grid.at(y).clusters().at(x)
-      if cell == "." { continue }
+      if cell == BLACK_CELL { continue }
 
       let solution_cell = puzzle.grid.solution.at(y).clusters().at(x)
 
-      if cell == " " or cell == "-" {
+      if cell == BLANK_CELL {
         space_exists = true
       }
 
-      if cell != " " and cell != "-" and cell != solution_cell {
+      if cell != BLANK_CELL and cell != solution_cell {
         wrong_letter_exists = true
       }
 
       let starts-across = (
-        (x == 0 or puzzle_grid.at(y).clusters().at(x - 1) == ".")
+        (x == 0 or puzzle_grid.at(y).clusters().at(x - 1) == BLACK_CELL)
           and (
             x + 1 < puzzle.info.width
-              and puzzle_grid.at(y).clusters().at(x + 1) != "."
+              and puzzle_grid.at(y).clusters().at(x + 1) != BLACK_CELL
           )
       )
       let starts-down = (
-        (y == 0 or puzzle_grid.at(y - 1).clusters().at(x) == ".")
+        (y == 0 or puzzle_grid.at(y - 1).clusters().at(x) == BLACK_CELL)
           and (
             y + 1 < puzzle.info.height
-              and puzzle_grid.at(y + 1).clusters().at(x) != "."
+              and puzzle_grid.at(y + 1).clusters().at(x) != BLACK_CELL
           )
       )
       if starts-across or starts-down {
@@ -109,10 +110,10 @@
 
       while x <= puzzle.info.width {
         let next_cell = puzzle_grid.at(y).clusters().at(x)
-        if next_cell == "-" or next_cell == " " {
+        if next_cell == BLANK_CELL {
           break
         }
-        if next_cell == "." or x + 1 == puzzle.info.width {
+        if next_cell == BLACK_CELL or x + 1 == puzzle.info.width {
           word_solved = true
           break
         }
@@ -145,10 +146,10 @@
 
       while y <= puzzle.info.height {
         let next_cell = puzzle_grid.at(y).clusters().at(x)
-        if next_cell == "-" or next_cell == " " {
+        if next_cell == BLANK_CELL {
           break
         }
-        if next_cell == "." or y + 1 == puzzle.info.height {
+        if next_cell == BLACK_CELL or y + 1 == puzzle.info.height {
           word_solved = true
           break
         }
@@ -195,7 +196,7 @@
                 box(
                   width: box_unit,
                   height: box_unit,
-                  fill: if cell == "." { foreground_color } else {
+                  fill: if cell == BLACK_CELL { foreground_color } else {
                     background_color
                   },
                   clip: true,
@@ -208,16 +209,16 @@
                         dx: box_unit * 0.05,
                         dy: box_unit * 0.05,
                         text(
-                          size: box_unit * 0.15,
+                          size: box_unit * 0.25,
                           str(num),
                         ),
                       )
                     }
-                    if cell != "." {
+                    if cell != BLACK_CELL {
                       place(
                         horizon + center,
                         text(weight: "medium", size: box_unit * 0.625, if cell
-                          == "-" {
+                          == BLANK_CELL {
                           ""
                         } else {
                           cell
