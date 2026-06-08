@@ -4,16 +4,16 @@
 // #set text(font: "Helvetica")
 #set text(font: "Arial")
 
-// // white and black colors
-// #let background_color = white
-// #let foreground_color = black
-// #let red_color = red
+// white and black colors
+#let background_color = white
+#let foreground_color = black
+#let red_color = red
 
-// nord colors
-#let background_color = rgb("#2E3440")
-#let foreground_color = rgb("#D8DEE9")
-#let red_color = rgb("#81A1C1")
-// #let red_color = rgb("#BF616A")
+// // nord colors
+// #let background_color = rgb("#2E3440")
+// #let foreground_color = rgb("#D8DEE9")
+// #let red_color = rgb("#81A1C1")
+// // #let red_color = rgb("#BF616A")
 
 #set page(fill: background_color)
 #set text(fill: foreground_color)
@@ -110,6 +110,8 @@
 
       while x <= puzzle.info.width {
         let next_cell = puzzle_grid.at(y).clusters().at(x)
+        // let solution_cell = puzzle.grid.solution.at(y).clusters().at(x)
+        // if next_cell == BLANK_CELL or next_cell != solution_cell {
         if next_cell == BLANK_CELL {
           break
         }
@@ -121,6 +123,7 @@
       }
 
       if word_solved {
+        // continue
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
@@ -146,6 +149,8 @@
 
       while y <= puzzle.info.height {
         let next_cell = puzzle_grid.at(y).clusters().at(x)
+        // let solution_cell = puzzle.grid.solution.at(y).clusters().at(x)
+        // if next_cell == BLANK_CELL or next_cell != solution_cell {
         if next_cell == BLANK_CELL {
           break
         }
@@ -159,6 +164,7 @@
       let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
 
       if word_solved {
+        // continue
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
@@ -209,7 +215,7 @@
                         dx: box_unit * 0.05,
                         dy: box_unit * 0.05,
                         text(
-                          size: box_unit * 0.25,
+                          size: box_unit * 0.20,
                           str(num),
                         ),
                       )

@@ -127,6 +127,28 @@ impl PuzzleState {
             return Ok(());
         }
 
+        if guess
+            .chars()
+            .zip(word_so_far.chars())
+            .any(|(a, b)| a != b && b != BLANK_CELL)
+        {
+            println!(
+                "At least one of the letters in your guess differs from the solved clue so far."
+            );
+            println!("Are you sure you want to add it? y/n");
+            match input::<String>()?.trim() {
+                "y" => {}
+                "n" => {
+                    println!("Cancelling solve.");
+                    return Ok(());
+                }
+                _ => {
+                    println!("Invalid input. Cancelling solve.");
+                    return Ok(());
+                }
+            }
+        }
+
         self.puzzle.grid.blank = self
             .puzzle
             .grid
