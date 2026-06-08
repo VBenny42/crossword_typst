@@ -123,7 +123,7 @@
       }
 
       if word_solved {
-        // continue
+        continue
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
@@ -164,7 +164,7 @@
       let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
 
       if word_solved {
-        // continue
+        continue
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
