@@ -1,7 +1,7 @@
 use puz_parse::{parse_file, Puzzle};
 use std::{collections::HashMap, error::Error, fs::File, path::PathBuf};
 
-use crate::{input, types};
+use crate::{input, pdfgen::compile_pdf, types};
 use types::{ClueInfo, CluesInfo, Direction, PuzzleState};
 
 const BLANK_CELL: char = '-';
@@ -31,6 +31,10 @@ impl PuzzleState {
         let file = File::create(&self.json_output_path)?;
         serde_json::to_writer(file, &self.puzzle)?;
         Ok(())
+    }
+
+    pub fn get_puz_json(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string(&self.puzzle)
     }
 
     fn print_puzzle(&self) {
@@ -355,6 +359,8 @@ impl PuzzleState {
                 Ok(_) => println!("Invalid choice, please try again."),
                 Err(e) => println!("Invalid input, please enter a number. Error: {e}"),
             }
+
+            compile_pdf(self);
         }
 
         Ok(())
