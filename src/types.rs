@@ -1,5 +1,5 @@
 use core::fmt;
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 use puz_parse::Puzzle;
 
@@ -20,8 +20,8 @@ pub struct CluesInfo {
 pub struct PuzzleState {
     pub puzzle: Puzzle,
     pub clues_info: CluesInfo,
-    pub puzzle_path: String,
-    pub json_output_path: String,
+    pub puzzle_path: PathBuf,
+    pub json_output_path: PathBuf,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

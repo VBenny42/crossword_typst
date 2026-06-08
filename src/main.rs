@@ -1,5 +1,5 @@
-use clap::Parser;
-use std::{fs::File, str::FromStr};
+use clap::{ArgAction::SetTrue, Parser};
+use std::{fs::File, path::PathBuf, str::FromStr};
 
 use crate::types::PuzzleState;
 
@@ -20,17 +20,21 @@ fn input<T: FromStr>() -> Result<T, <T as FromStr>::Err> {
 
 #[derive(Parser, Debug)]
 struct Args {
-    #[arg(short, long, default_value = JSON_OUTPUT_PATH)]
-    json_output_path: Option<String>,
+    #[arg(short, long, default_value = JSON_OUTPUT_PATH, help="Path to where json should be saved")]
+    json_output_path: Option<PathBuf>,
 
-    #[arg(short, long)]
-    puzzle_file_path: String,
+    #[arg(short, long, help = "Path to .puz file to be read")]
+    // Change to path_buf
+    puzzle_file_path: std::path::PathBuf,
+
+    #[arg(short, long, action = SetTrue, help = "Just write to json file and exit")]
+    write_to_json_only: bool,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    let mut state = PuzzleState::new(&args.puzzle_file_path, &args.json_output_path.unwrap())?;
+    let mut state = PuzzleState::new(args.puzzle_file_path, args.json_output_path.unwrap())?;
 
     if File::open(&state.json_output_path).is_ok() {
     } else {
@@ -47,7 +51,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         state.write_puzzle_to_json()?;
     }
 
-    state.solve_puzzle()?;
+    if args.write_to_json_only {
+        return Ok(());
+    } else {
+        state.solve_puzzle()?;
+    }
 
     Ok(())
 }

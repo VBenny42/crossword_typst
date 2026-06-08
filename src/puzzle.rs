@@ -1,5 +1,5 @@
 use puz_parse::{parse_file, Puzzle};
-use std::{collections::HashMap, error::Error, fs::File};
+use std::{collections::HashMap, error::Error, fs::File, path::PathBuf};
 
 use crate::{input, types};
 use types::{ClueInfo, CluesInfo, Direction, PuzzleState};
@@ -8,12 +8,15 @@ const BLANK_CELL: char = '-';
 const BLACK_CELL: char = '.';
 
 impl PuzzleState {
-    pub fn new(puzzle_file_path: &str, json_output_path: &str) -> Result<Self, Box<dyn Error>> {
+    pub fn new(
+        puzzle_file_path: PathBuf,
+        json_output_path: PathBuf,
+    ) -> Result<Self, Box<dyn Error>> {
         Ok(PuzzleState {
-            puzzle: initialize_puzzle(puzzle_file_path)?,
-            clues_info: extract_clue_info(&initialize_puzzle(puzzle_file_path)?),
-            puzzle_path: puzzle_file_path.to_string(),
-            json_output_path: json_output_path.to_string(),
+            puzzle: initialize_puzzle(&puzzle_file_path)?,
+            clues_info: extract_clue_info(&initialize_puzzle(&puzzle_file_path)?),
+            puzzle_path: puzzle_file_path,
+            json_output_path,
         })
     }
 
@@ -222,9 +225,9 @@ impl PuzzleState {
             println!("6. Remove all wrong answers from the puzzle");
             println!("7. Exit");
 
-            let choice: Result<u8, _> = input();
-            match choice {
-                Ok(1) => {
+            let choice: Result<String, _> = input();
+            match choice.as_deref() {
+                Ok("1") => {
                     println!("You chose to solve an across clue. Please enter the clue number:");
                     let clue_number: u8 = match input() {
                         Ok(num) => num,
@@ -243,7 +246,7 @@ impl PuzzleState {
 
                     write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
                 }
-                Ok(2) => {
+                Ok("2") => {
                     println!("You chose to solve a down clue. Please enter the clue number:");
                     let clue_number: u8 = match input() {
                         Ok(num) => num,
@@ -262,17 +265,17 @@ impl PuzzleState {
 
                     write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
                 }
-                Ok(3) => {
+                Ok("3") => {
                     println!("Overwriting JSON file with blank puzzle data...");
                     let blank_puzzle = initialize_puzzle(&self.puzzle_path)?;
                     write_puzzle_to_json(&blank_puzzle, &self.json_output_path)?;
                     self.puzzle.grid.blank.clone_from(&blank_puzzle.grid.blank);
                 }
-                Ok(4) => {
+                Ok("4") => {
                     println!("Current state of the puzzle:");
                     self.print_puzzle();
                 }
-                Ok(5) => {
+                Ok("5") => {
                     println!("You chose to remove a clue's answer. Please enter the clue number:");
                     let clue_number: u8 = input()?;
 
@@ -292,7 +295,7 @@ impl PuzzleState {
 
                     write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
                 }
-                Ok(6) => {
+                Ok("6") => {
                     println!("Removing all wrong answers from the puzzle...");
                     if self.remove_wrong_answers() {
                         println!("No wrong answers to remove!");
@@ -301,9 +304,31 @@ impl PuzzleState {
                         write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
                     }
                 }
-                Ok(7) => {
+                Ok("7") => {
                     println!("Exiting...");
                     break;
+                }
+                Ok(s) if s.starts_with('1') || s.starts_with('2') => {
+                    let direction = if s.starts_with('1') {
+                        Direction::Across
+                    } else {
+                        Direction::Down
+                    };
+                    let clue_number: u8 = match s[1..].trim().parse() {
+                        Ok(num) => num,
+                        Err(e) => {
+                            println!("Invalid clue number. Error: {e}");
+                            continue;
+                        }
+                    };
+                    match self.solve_clue(clue_number, direction) {
+                        Ok(()) => {}
+                        Err(e) => {
+                            println!("Error solving clue: {e}");
+                            continue;
+                        }
+                    }
+                    write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
                 }
                 Ok(_) => println!("Invalid choice, please try again."),
                 Err(e) => println!("Invalid input, please enter a number. Error: {e}"),
@@ -314,14 +339,14 @@ impl PuzzleState {
     }
 }
 
-fn initialize_puzzle(file_path: &str) -> Result<Puzzle, Box<dyn std::error::Error>> {
+fn initialize_puzzle(file_path: &PathBuf) -> Result<Puzzle, Box<dyn std::error::Error>> {
     let puzzle = parse_file(file_path)?;
     Ok(puzzle)
 }
 
 fn write_puzzle_to_json(
     puzzle: &Puzzle,
-    output_path: &str,
+    output_path: &PathBuf,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let file = File::create(output_path)?;
     serde_json::to_writer(file, puzzle)?;
