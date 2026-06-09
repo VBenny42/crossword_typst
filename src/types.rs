@@ -1,5 +1,5 @@
 use core::fmt;
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, str::FromStr};
 
 use puz_parse::Puzzle;
 
@@ -38,6 +38,17 @@ impl fmt::Display for Direction {
         match *self {
             Direction::Down => write!(f, "Down"),
             Direction::Across => write!(f, "Across"),
+        }
+    }
+}
+
+impl FromStr for Direction {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim() {
+            "1" => Ok(Direction::Across),
+            "2" => Ok(Direction::Down),
+            _ => Err(format!("Invalid direction number: {}", s.trim())),
         }
     }
 }

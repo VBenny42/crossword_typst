@@ -2,6 +2,7 @@ use std::fs;
 
 use typst::foundations::{Dict, IntoValue};
 use typst_as_lib::{typst_kit_options::TypstKitFontOptions, TypstEngine};
+use typst_pdf::PdfOptions;
 
 use crate::types::PuzzleState;
 
@@ -32,10 +33,8 @@ pub fn compile_pdf(puzzle: &PuzzleState) {
         .output
         .expect("typst::compile() returned an error!");
 
-    let options = Default::default();
-
-    let pdf = typst_pdf::pdf(&doc, &options).expect("Could not generate pdf");
-    fs::write(PDF_OUTPUT_PATH, pdf).expect("Could not write pdf")
+    let pdf = typst_pdf::pdf(&doc, &PdfOptions::default()).expect("Could not generate pdf");
+    fs::write(PDF_OUTPUT_PATH, pdf).expect("Could not write pdf");
 }
 
 // pub fn compile_pdf_world(puzzle: &PuzzleState) {

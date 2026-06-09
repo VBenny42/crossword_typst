@@ -65,10 +65,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if args.write_to_json_only {
         return Ok(());
-    } else {
-        compile_pdf(&state);
-        state.solve_puzzle()?;
     }
+    compile_pdf(&state);
+    state.solve_puzzle()?;
 
     Ok(())
 }

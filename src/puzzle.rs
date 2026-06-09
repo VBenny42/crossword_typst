@@ -7,6 +7,38 @@ use types::{ClueInfo, CluesInfo, Direction, PuzzleState};
 const BLANK_CELL: char = '-';
 const BLACK_CELL: char = '.';
 
+macro_rules! solve_clue_input {
+    ($self:expr, $direction:expr) => {
+        println!("Please enter the clue number:");
+        let clue_number: u8 = match input() {
+            Ok(num) => num,
+            Err(e) => {
+                println!("Invalid input, please enter a number. Error: {e}");
+                continue;
+            }
+        };
+        match $self.solve_clue(clue_number, $direction) {
+            Ok(()) => {}
+            Err(e) => {
+                println!("Error solving clue: {e}");
+                continue;
+            }
+        }
+    };
+}
+
+macro_rules! try_or_continue {
+    ($expr:expr, $msg:expr) => {
+        match $expr {
+            Ok(val) => val,
+            Err(e) => {
+                println!("{}: {e}", $msg);
+                continue;
+            }
+        }
+    };
+}
+
 impl PuzzleState {
     pub fn new(
         puzzle_file_path: PathBuf,
@@ -248,53 +280,27 @@ impl PuzzleState {
                 break;
             }
 
-            println!("Your choices are:");
-            println!("1. Solve an across clue");
-            println!("2. Solve a down clue");
-            println!("3. Overwrite JSON file with blank puzzle data");
-            println!("4. Print the current state of the puzzle");
-            println!("5. Remove a clue's answer from the puzzle");
-            println!("6. Remove all wrong answers from the puzzle");
-            println!("7. Exit");
+            println!(
+                "Your choices are:
+1. Solve an across clue
+2. Solve a down clue
+3. Overwrite JSON file with blank puzzle data
+4. Print the current state of the puzzle
+5. Remove a clue's answer from the puzzle
+6. Remove all wrong answers from the puzzle
+7. Exit"
+            );
 
             let choice: Result<String, _> = input();
             match choice.as_deref() {
                 Ok("1") => {
-                    println!("You chose to solve an across clue. Please enter the clue number:");
-                    let clue_number: u8 = match input() {
-                        Ok(num) => num,
-                        Err(e) => {
-                            println!("Invalid input, please enter a number. Error: {e}");
-                            continue;
-                        }
-                    };
-                    match self.solve_clue(clue_number, Direction::Across) {
-                        Ok(()) => {}
-                        Err(e) => {
-                            println!("Error solving clue: {e}");
-                            continue;
-                        }
-                    }
-
+                    println!("You chose to solve an across clue.");
+                    solve_clue_input!(self, Direction::Across);
                     should_compile = true;
                 }
                 Ok("2") => {
-                    println!("You chose to solve a down clue. Please enter the clue number:");
-                    let clue_number: u8 = match input() {
-                        Ok(num) => num,
-                        Err(e) => {
-                            println!("Invalid input, please enter a number. Error: {e}");
-                            continue;
-                        }
-                    };
-                    match self.solve_clue(clue_number, Direction::Down) {
-                        Ok(()) => {}
-                        Err(e) => {
-                            println!("Error solving clue: {e}");
-                            continue;
-                        }
-                    }
-
+                    println!("You chose to solve a down clue.");
+                    solve_clue_input!(self, Direction::Down);
                     should_compile = true;
                 }
                 Ok("3") => {
@@ -309,19 +315,15 @@ impl PuzzleState {
                 }
                 Ok("5") => {
                     println!("You chose to remove a clue's answer. Please enter the clue number:");
-                    let clue_number: u8 = input()?;
+                    let clue_number: u8 = try_or_continue!(input(), "Invalid digit:");
 
                     println!("1. Remove an across clue");
                     println!("2. Remove a down clue");
 
-                    let direction = match input()? {
-                        1 => Direction::Across,
-                        2 => Direction::Down,
-                        _ => {
-                            println!("Invalid input, please enter 1 or 2");
-                            continue;
-                        }
-                    };
+                    let direction = try_or_continue!(
+                        input::<Direction>(),
+                        "Invalid input, please enter 1 or 2:"
+                    );
 
                     self.remove_clue_answer(clue_number, direction)?;
 
@@ -341,25 +343,15 @@ impl PuzzleState {
                     break;
                 }
                 Ok(s) if s.starts_with('1') || s.starts_with('2') => {
-                    let direction = if s.starts_with('1') {
-                        Direction::Across
-                    } else {
-                        Direction::Down
-                    };
-                    let clue_number: u8 = match s[1..].trim().parse() {
-                        Ok(num) => num,
-                        Err(e) => {
-                            println!("Invalid clue number. Error: {e}");
-                            continue;
-                        }
-                    };
-                    match self.solve_clue(clue_number, direction) {
-                        Ok(()) => {}
-                        Err(e) => {
-                            println!("Error solving clue: {e}");
-                            continue;
-                        }
-                    }
+                    let direction = try_or_continue!(s[0..1].parse(), "Invalid input:");
+
+                    let clue_number: u8 =
+                        try_or_continue!(s[1..].trim().parse(), "Invalid clue number:");
+                    try_or_continue!(
+                        self.solve_clue(clue_number, direction),
+                        "Error solving clue:"
+                    );
+
                     should_compile = true;
                 }
                 Ok(_) => println!("Invalid choice, please try again."),
@@ -367,8 +359,8 @@ impl PuzzleState {
             }
 
             if should_compile {
-                write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
                 compile_pdf(self);
+                write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
             }
         }
 
