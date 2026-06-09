@@ -16,12 +16,19 @@ pub fn compile_pdf(puzzle: &PuzzleState) {
 
     let json = puzzle.get_puz_json().unwrap();
 
-    let crossword_dict: Dict = [("crossword_json".into(), json.into_value())]
-        .into_iter()
-        .collect();
+    let inputs: Dict = [
+        ("crossword_json".into(), json.into_value()),
+        ("nord_colors".into(), puzzle.nord_colors.into_value()),
+        (
+            "hide_completed_clues".into(),
+            puzzle.hide_completed_clues.into_value(),
+        ),
+    ]
+    .into_iter()
+    .collect();
 
     let doc = template
-        .compile_with_input(crossword_dict)
+        .compile_with_input(inputs)
         .output
         .expect("typst::compile() returned an error!");
 

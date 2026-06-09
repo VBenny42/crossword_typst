@@ -6,16 +6,19 @@
 // #set text(font: "Helvetica")
 #set text(font: "Arial")
 
+
 // white and black colors
 #let background_color = white
 #let foreground_color = black
 #let red_color = red
 
-// // nord colors
-// #let background_color = rgb("#2E3440")
-// #let foreground_color = rgb("#D8DEE9")
-// #let red_color = rgb("#81A1C1")
-// // #let red_color = rgb("#BF616A")
+#if inputs.nord_colors == true {
+  // nord colors
+  background_color = rgb("#2E3440")
+  foreground_color = rgb("#D8DEE9")
+  red_color = rgb("#81A1C1")
+  // #let red_color = rgb("#BF616A")
+}
 
 #set page(fill: background_color)
 #set text(fill: foreground_color)
@@ -125,7 +128,7 @@
       }
 
       if word_solved {
-        continue
+        if inputs.hide_completed_clues { continue }
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
@@ -166,7 +169,7 @@
       let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
 
       if word_solved {
-        continue
+        if inputs.hide_completed_clues { continue }
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),

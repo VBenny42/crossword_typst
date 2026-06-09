@@ -30,12 +30,23 @@ struct Args {
 
     #[arg(short, long, action = SetTrue, help = "Just write to json file and exit")]
     write_to_json_only: bool,
+
+    #[arg(short, long, action = SetTrue, help = "Compile the PDF with nord colors")]
+    nord_colors: bool,
+
+    #[arg(long, action = SetTrue, help = "Hide completed clues")]
+    hide_completed_clues: bool,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    let mut state = PuzzleState::new(args.puzzle_file_path, args.json_output_path.unwrap())?;
+    let mut state = PuzzleState::new(
+        args.puzzle_file_path,
+        args.json_output_path.unwrap(),
+        args.nord_colors,
+        args.hide_completed_clues,
+    )?;
 
     if File::open(&state.json_output_path).is_ok() {
     } else {

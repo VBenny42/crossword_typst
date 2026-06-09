@@ -22,6 +22,9 @@ pub struct PuzzleState {
     pub clues_info: CluesInfo,
     pub puzzle_path: PathBuf,
     pub json_output_path: PathBuf,
+
+    pub nord_colors: bool,
+    pub hide_completed_clues: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

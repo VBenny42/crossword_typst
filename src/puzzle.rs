@@ -11,12 +11,16 @@ impl PuzzleState {
     pub fn new(
         puzzle_file_path: PathBuf,
         json_output_path: PathBuf,
+        nord_colors: bool,
+        hide_completed_clues: bool,
     ) -> Result<Self, Box<dyn Error>> {
         Ok(PuzzleState {
             puzzle: initialize_puzzle(&puzzle_file_path)?,
             clues_info: extract_clue_info(&initialize_puzzle(&puzzle_file_path)?),
             puzzle_path: puzzle_file_path,
             json_output_path,
+            nord_colors,
+            hide_completed_clues,
         })
     }
 
