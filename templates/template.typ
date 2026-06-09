@@ -184,7 +184,7 @@
 
   grid(
     columns: (1fr, 3fr),
-    gutter: 0in,
+    gutter: 0.05in,
 
     {
       across_clues

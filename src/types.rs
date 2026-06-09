@@ -45,10 +45,10 @@ impl fmt::Display for Direction {
 impl FromStr for Direction {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.trim() {
+        match s {
             "1" => Ok(Direction::Across),
             "2" => Ok(Direction::Down),
-            _ => Err(format!("Invalid direction number: {}", s.trim())),
+            _ => Err(format!("Invalid direction number: {}", s)),
         }
     }
 }
