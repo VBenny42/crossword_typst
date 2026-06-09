@@ -6,7 +6,7 @@ use typst_as_lib::{typst_kit_options::TypstKitFontOptions, TypstEngine};
 use crate::types::PuzzleState;
 
 static TEMPLATE_FILE: &str = include_str!("../templates/template.typ");
-static OUTPUT_PATH: &str = "./target/crossword.pdf";
+static PDF_OUTPUT_PATH: &str = "./target/crossword.pdf";
 
 pub fn compile_pdf(puzzle: &PuzzleState) {
     let template = TypstEngine::builder()
@@ -16,16 +16,39 @@ pub fn compile_pdf(puzzle: &PuzzleState) {
 
     let json = puzzle.get_puz_json().unwrap();
 
-    let mut sys_dict: Dict = Dict::new();
-    sys_dict.insert("crossword_json".into(), json.into_value());
+    let crossword_dict: Dict = [("crossword_json".into(), json.into_value())]
+        .into_iter()
+        .collect();
 
     let doc = template
-        .compile_with_input(sys_dict)
+        .compile_with_input(crossword_dict)
         .output
         .expect("typst::compile() returned an error!");
 
     let options = Default::default();
 
     let pdf = typst_pdf::pdf(&doc, &options).expect("Could not generate pdf");
-    fs::write(OUTPUT_PATH, pdf).expect("Could not write pdf")
+    fs::write(PDF_OUTPUT_PATH, pdf).expect("Could not write pdf")
 }
+
+// pub fn compile_pdf_world(puzzle: &PuzzleState) {
+//     let template = TypstEngine::builder()
+//         .main_file(TEMPLATE_FILE)
+//         .search_fonts_with(TypstKitFontOptions::default())
+//         .build();
+//
+//     let json = puzzle.get_puz_json().unwrap();
+//
+//     let mut sys_dict: Dict = Dict::new();
+//     sys_dict.insert("crossword_json".into(), json.into_value());
+//
+//     let world = template.world_builder().with_inputs(sys_dict);
+//
+//     let built = world.build().unwrap();
+//
+//     let doc = typst::compile(&built).output.expect("compile failed");
+//     let options = Default::default();
+//
+//     let pdf = typst_pdf::pdf(&doc, &options).expect("Could not generate pdf");
+//     fs::write(OUTPUT_PATH, pdf).expect("Could not write pdf")
+// }

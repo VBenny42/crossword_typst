@@ -236,6 +236,8 @@ impl PuzzleState {
     }
 
     pub fn solve_puzzle(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let mut should_compile = false;
+
         loop {
             if self.puzzle.grid.blank == self.puzzle.grid.solution {
                 println!("Congratulations! You've solved the puzzle!");
@@ -270,7 +272,7 @@ impl PuzzleState {
                         }
                     }
 
-                    write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
+                    should_compile = true;
                 }
                 Ok("2") => {
                     println!("You chose to solve a down clue. Please enter the clue number:");
@@ -289,12 +291,12 @@ impl PuzzleState {
                         }
                     }
 
-                    write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
+                    should_compile = true;
                 }
                 Ok("3") => {
                     println!("Overwriting JSON file with blank puzzle data...");
                     let blank_puzzle = initialize_puzzle(&self.puzzle_path)?;
-                    write_puzzle_to_json(&blank_puzzle, &self.json_output_path)?;
+                    should_compile = true;
                     self.puzzle.grid.blank.clone_from(&blank_puzzle.grid.blank);
                 }
                 Ok("4") => {
@@ -319,7 +321,7 @@ impl PuzzleState {
 
                     self.remove_clue_answer(clue_number, direction)?;
 
-                    write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
+                    should_compile = true;
                 }
                 Ok("6") => {
                     println!("Removing all wrong answers from the puzzle...");
@@ -327,7 +329,7 @@ impl PuzzleState {
                         println!("No wrong answers to remove!");
                     } else {
                         println!("Wrong answers found and removed.");
-                        write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
+                        should_compile = true;
                     }
                 }
                 Ok("7") => {
@@ -354,13 +356,16 @@ impl PuzzleState {
                             continue;
                         }
                     }
-                    write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
+                    should_compile = true;
                 }
                 Ok(_) => println!("Invalid choice, please try again."),
                 Err(e) => println!("Invalid input, please enter a number. Error: {e}"),
             }
 
-            compile_pdf(self);
+            if should_compile {
+                write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
+                compile_pdf(self);
+            }
         }
 
         Ok(())

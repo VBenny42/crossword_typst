@@ -1,13 +1,13 @@
 use clap::{ArgAction::SetTrue, Parser};
 use std::{fs::File, path::PathBuf, str::FromStr};
 
-use crate::types::PuzzleState;
+use crate::{pdfgen::compile_pdf, types::PuzzleState};
 
 mod pdfgen;
 mod puzzle;
 mod types;
 
-static JSON_OUTPUT_PATH: &str = "src/output.json";
+static JSON_OUTPUT_PATH: &str = "target/output.json";
 
 fn input<T: FromStr>() -> Result<T, <T as FromStr>::Err> {
     let mut input: String = String::with_capacity(64);
@@ -55,6 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if args.write_to_json_only {
         return Ok(());
     } else {
+        compile_pdf(&state);
         state.solve_puzzle()?;
     }
 
