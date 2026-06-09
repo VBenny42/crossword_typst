@@ -17,7 +17,7 @@ macro_rules! solve_clue_input {
                 continue;
             }
         };
-        match $self.solve_clue(clue_number, $direction) {
+        match $self.solve_clue(clue_number, $direction, None) {
             Ok(()) => {}
             Err(e) => {
                 println!("Error solving clue: {e}");
@@ -114,6 +114,7 @@ impl PuzzleState {
         &mut self,
         number: u8,
         direction: Direction,
+        passed_guess: Option<&str>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let clue_info = match direction {
             Direction::Across => self
@@ -153,11 +154,16 @@ impl PuzzleState {
         };
 
         println!(
-            "{}. {} ({}), {}. `{word_so_far}` Input your guess:",
+            "{}. {} ({}), {}. `{word_so_far}`",
             number, clue_text, clue_info.length, direction
         );
 
-        let guess = input::<String>()?.to_uppercase();
+        let guess: String = if let Some(pass) = passed_guess {
+            pass.to_uppercase()
+        } else {
+            println!("Input your guess:");
+            input::<String>()?.to_uppercase()
+        };
 
         if guess.len() != clue_info.length {
             println!(
@@ -345,10 +351,13 @@ impl PuzzleState {
                 Ok(s) if s.starts_with('1') || s.starts_with('2') => {
                     let direction = try_or_continue!(s[0..1].parse(), "Invalid input:");
 
+                    let mut split = s[1..].split_whitespace();
+
                     let clue_number: u8 =
-                        try_or_continue!(s[1..].trim().parse(), "Invalid clue number:");
+                        try_or_continue!(split.next().unwrap().parse(), "Invalid clue number:");
+
                     try_or_continue!(
-                        self.solve_clue(clue_number, direction),
+                        self.solve_clue(clue_number, direction, split.next()),
                         "Error solving clue:"
                     );
 
