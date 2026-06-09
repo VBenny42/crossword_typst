@@ -46,9 +46,11 @@ impl PuzzleState {
         nord_colors: bool,
         hide_completed_clues: bool,
     ) -> Result<Self, Box<dyn Error>> {
+        let puzzle = initialize_puzzle(&puzzle_file_path)?;
+
         Ok(PuzzleState {
-            puzzle: initialize_puzzle(&puzzle_file_path)?,
-            clues_info: extract_clue_info(&initialize_puzzle(&puzzle_file_path)?),
+            clues_info: extract_clue_info(&puzzle),
+            puzzle,
             puzzle_path: puzzle_file_path,
             json_output_path,
             nord_colors,
@@ -369,7 +371,7 @@ impl PuzzleState {
 
             if should_compile {
                 compile_pdf(self);
-                write_puzzle_to_json(&self.puzzle, &self.json_output_path)?;
+                self.write_puzzle_to_json()?;
             }
         }
 
@@ -380,15 +382,6 @@ impl PuzzleState {
 fn initialize_puzzle(file_path: &PathBuf) -> Result<Puzzle, Box<dyn std::error::Error>> {
     let puzzle = parse_file(file_path)?;
     Ok(puzzle)
-}
-
-fn write_puzzle_to_json(
-    puzzle: &Puzzle,
-    output_path: &PathBuf,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let file = File::create(output_path)?;
-    serde_json::to_writer(file, puzzle)?;
-    Ok(())
 }
 
 fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {

@@ -25,7 +25,6 @@ struct Args {
     json_output_path: Option<PathBuf>,
 
     #[arg(short, long, help = "Path to .puz file to be read")]
-    // Change to path_buf
     puzzle_file_path: std::path::PathBuf,
 
     #[arg(short, long, action = SetTrue, help = "Just write to json file and exit")]
@@ -34,7 +33,7 @@ struct Args {
     #[arg(short, long, action = SetTrue, help = "Compile the PDF with nord colors")]
     nord_colors: bool,
 
-    #[arg(long, action = SetTrue, help = "Hide completed clues")]
+    #[arg(long, action = SetTrue, help = "Hide completed clues in the PDF")]
     hide_completed_clues: bool,
 }
 
