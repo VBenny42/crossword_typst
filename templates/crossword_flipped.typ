@@ -1,29 +1,26 @@
-#import sys: inputs
+//// For use with typst watch
 
-#set page(paper: "us-letter")
+#set page(paper: "us-letter", flipped: true)
 #set page(margin: (left: 0.25in, right: 0.25in, top: 0.5in, bottom: 0.5in))
 #set text(size: 14pt)
 // #set text(font: "Helvetica")
 #set text(font: "Arial")
 
+// // white and black colors
+// #let background_color = white
+// #let foreground_color = black
+// #let red_color = red
 
-// white and black colors
-#let background_color = white
-#let foreground_color = black
-#let red_color = red
+// // nord inverted colors
+#let background_color = rgb(209, 203, 192)
+#let foreground_color = rgb(40, 33, 23)
+#let red_color = rgb(127, 94, 63)
 
-#if inputs.nord_colors == true {
-  // // nord colors
-  // background_color = rgb("#2E3440")
-  // foreground_color = rgb("#D8DEE9")
-  // red_color = rgb("#81A1C1")
-  // // #let red_color = rgb("#BF616A")
-
-  // // nord inverted colors
-  background_color = rgb(209, 203, 192)
-  foreground_color = rgb(40, 33, 23)
-  red_color = rgb(127, 94, 63)
-}
+// // nord colors
+// #let background_color = rgb("#2E3440")
+// #let foreground_color = rgb("#D8DEE9")
+// #let red_color = rgb("#81A1C1")
+// // #let red_color = rgb("#BF616A")
 
 #set page(fill: background_color)
 #set text(fill: foreground_color)
@@ -35,7 +32,7 @@
   let puzzle_grid = puzzle.grid.at("blank")
 
   // Allotted space should be 3/4 of usable page width
-  let puzzle_width = (8.5in - 0.5in) * (3 / 4)
+  let puzzle_width = (11in - 0.5in) * 0.6
   let box_unit = puzzle_width / puzzle.info.width
 
   let wrong_letter_exists = false
@@ -133,7 +130,7 @@
       }
 
       if word_solved {
-        if inputs.hide_completed_clues { continue }
+        // continue
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
@@ -174,7 +171,7 @@
       let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
 
       if word_solved {
-        if inputs.hide_completed_clues { continue }
+        // continue
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
@@ -188,11 +185,14 @@
   ]
 
   grid(
-    columns: (1fr, 3fr),
-    gutter: 0.05in,
+    columns: (0.75fr, 0.75fr, auto),
+    gutter: 0in,
 
     {
       across_clues
+    },
+    {
+      down_clues
     },
 
     {
@@ -235,6 +235,7 @@
                             radius: (box_unit / 2) - 1pt,
                             stroke: (
                               paint: foreground_color.lighten(60%),
+                              thickness: 1pt,
                               dash: "densely-dotted",
                             ),
                           ))
@@ -259,11 +260,9 @@
           }
         ),
       )
-
-      columns(3)[#down_clues]
     },
   )
 }
 
-#let puzzle_json = json(bytes(inputs.crossword_json))
+#let puzzle_json = json("../target/output.json")
 #crossword(puzzle_json)

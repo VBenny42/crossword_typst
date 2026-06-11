@@ -25,6 +25,7 @@ pub struct PuzzleState {
 
     pub nord_colors: bool,
     pub hide_completed_clues: bool,
+    pub show_clue_length: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

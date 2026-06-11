@@ -35,6 +35,9 @@ struct Args {
 
     #[arg(long, action = SetTrue, help = "Hide completed clues in the PDF")]
     hide_completed_clues: bool,
+
+    #[arg(short, long, action = SetTrue, help = "Show word length for a clue in the PDF")]
+    show_clue_length: bool,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -45,6 +48,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         args.json_output_path.unwrap(),
         args.nord_colors,
         args.hide_completed_clues,
+        args.show_clue_length,
     )?;
 
     if File::open(&state.json_output_path).is_ok() {

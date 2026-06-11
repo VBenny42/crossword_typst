@@ -45,16 +45,30 @@ impl PuzzleState {
         json_output_path: PathBuf,
         nord_colors: bool,
         hide_completed_clues: bool,
+        show_clue_length: bool,
     ) -> Result<Self, Box<dyn Error>> {
-        let puzzle = initialize_puzzle(&puzzle_file_path)?;
+        let mut puzzle = initialize_puzzle(&puzzle_file_path)?;
+        let clues_info = extract_clue_info(&puzzle);
+
+        if show_clue_length {
+            puzzle.clues.across.iter_mut().for_each(|(k, v)| {
+                let clue_info = clues_info.across.get(&(*k as u8)).unwrap();
+                *v = format!("{v} ({})", clue_info.length);
+            });
+            puzzle.clues.down.iter_mut().for_each(|(k, v)| {
+                let clue_info = clues_info.down.get(&(*k as u8)).unwrap();
+                *v = format!("{v} ({})", clue_info.length);
+            });
+        }
 
         Ok(PuzzleState {
-            clues_info: extract_clue_info(&puzzle),
             puzzle,
+            clues_info,
             puzzle_path: puzzle_file_path,
             json_output_path,
             nord_colors,
             hide_completed_clues,
+            show_clue_length,
         })
     }
 
@@ -155,10 +169,14 @@ impl PuzzleState {
                 .collect(),
         };
 
-        println!(
-            "{}. {} ({}), {}. `{word_so_far}`",
-            number, clue_text, clue_info.length, direction
-        );
+        if self.show_clue_length {
+            println!("{}. {}, {}. `{word_so_far}`", number, clue_text, direction);
+        } else {
+            println!(
+                "{}. {} ({}), {}. `{word_so_far}`",
+                number, clue_text, clue_info.length, direction
+            );
+        }
 
         let guess: String = if let Some(pass) = passed_guess {
             pass.to_uppercase()
