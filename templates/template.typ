@@ -94,7 +94,9 @@
     } else {
       puzzle.info.title
     },
-    footer: puzzle.info.author,
+    footer: if puzzle.info.notes != none {
+      [#puzzle.info.author #h(1fr) #text(style: "italic", puzzle.info.notes)]
+    } else { puzzle.info.author },
   )
 
   let sorted_across = puzzle

@@ -34,9 +34,12 @@
 #let crossword(puzzle) = {
   let puzzle_grid = puzzle.grid.at("blank")
 
-  // Allotted space should be 3/4 of usable page width
-  let puzzle_width = (8.5in - 0.5in) * (4 / 4)
-  let box_unit = puzzle_width / puzzle.info.width
+  let puzzle_width = (11in - 0.5in) * 0.7
+  let puzzle_height = (8.5in - 1in)
+  let box_unit = calc.min(
+    puzzle_width / puzzle.info.width,
+    puzzle_height / puzzle.info.height,
+  )
 
   let wrong_letter_exists = false
   let space_exists = false
@@ -94,7 +97,9 @@
     } else {
       puzzle.info.title
     },
-    footer: puzzle.info.author,
+    footer: if puzzle.info.notes != none {
+      [#puzzle.info.author #h(1fr) #text(style: "italic", puzzle.info.notes)]
+    } else { puzzle.info.author },
   )
 
   let sorted_across = puzzle
@@ -192,7 +197,7 @@
 
   grid(
     columns: (0.75fr, 0.75fr, auto),
-    gutter: 0in,
+    gutter: 0.01in,
 
     {
       across_clues

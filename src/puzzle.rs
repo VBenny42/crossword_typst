@@ -32,7 +32,7 @@ macro_rules! try_or_continue {
         match $expr {
             Ok(val) => val,
             Err(e) => {
-                println!("{}: {e}", $msg);
+                println!("{} {e}", $msg);
                 continue;
             }
         }
@@ -179,11 +179,11 @@ impl PuzzleState {
         };
 
         if guess.len() != clue_info.length {
-            println!(
+            return Err(format!(
                 "Your guess must be {} characters long. Please try again.",
                 clue_info.length
-            );
-            return Ok(());
+            )
+            .into());
         }
 
         if guess

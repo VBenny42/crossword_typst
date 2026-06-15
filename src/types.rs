@@ -65,10 +65,10 @@ pub enum PdfStyle {
 impl FromStr for PdfStyle {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "Normal" => Ok(PdfStyle::Normal),
-            "Larger" => Ok(PdfStyle::Larger),
-            "Landscape" => Ok(PdfStyle::Landscape),
+        match s.to_lowercase().as_str() {
+            "normal" => Ok(PdfStyle::Normal),
+            "larger" => Ok(PdfStyle::Larger),
+            "landscape" => Ok(PdfStyle::Landscape),
             _ => Err(format!("Invalid PdfStyle: {}", s)),
         }
     }

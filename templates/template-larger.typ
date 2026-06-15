@@ -1,6 +1,6 @@
 #import sys: inputs
 
-#set page(paper: "us-letter")
+#set page(paper: "us-legal")
 #set page(margin: (left: 0.25in, right: 0.25in, top: 0.5in, bottom: 0.5in))
 #set text(size: 14pt)
 // #set text(font: "Helvetica")
@@ -94,7 +94,9 @@
     } else {
       puzzle.info.title
     },
-    footer: puzzle.info.author,
+    footer: if puzzle.info.notes != none {
+      [#puzzle.info.author #h(1fr) #text(style: "italic", puzzle.info.notes)]
+    } else { puzzle.info.author },
   )
 
   let sorted_across = puzzle
@@ -177,7 +179,10 @@
       let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
 
       if word_solved {
-        if inputs.hide_completed_clues { continue }
+        if (
+          inputs.hide_completed_clues == "true"
+            or inputs.hide_completed_clues == true
+        ) { continue }
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
