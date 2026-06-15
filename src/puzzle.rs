@@ -4,8 +4,8 @@ use std::{collections::HashMap, error::Error, fs::File, path::PathBuf};
 use crate::{input, pdfgen::compile_pdf, types};
 use types::{ClueInfo, CluesInfo, Direction, PuzzleState};
 
-const BLANK_CELL: char = '-';
-const BLACK_CELL: char = '.';
+pub const BLANK_CELL: char = '-';
+pub const BLACK_CELL: char = '.';
 
 macro_rules! solve_clue_input {
     ($self:expr, $direction:expr) => {
@@ -40,17 +40,11 @@ macro_rules! try_or_continue {
 }
 
 impl PuzzleState {
-    pub fn new(
-        puzzle_file_path: PathBuf,
-        json_output_path: PathBuf,
-        nord_colors: bool,
-        hide_completed_clues: bool,
-        show_clue_length: bool,
-    ) -> Result<Self, Box<dyn Error>> {
-        let mut puzzle = initialize_puzzle(&puzzle_file_path)?;
+    pub fn new(args: &crate::Args) -> Result<Self, Box<dyn Error>> {
+        let mut puzzle = initialize_puzzle(&args.puzzle_file_path)?;
         let clues_info = extract_clue_info(&puzzle);
 
-        if show_clue_length {
+        if args.show_clue_length {
             puzzle.clues.across.iter_mut().for_each(|(k, v)| {
                 let clue_info = clues_info.across.get(&(*k as u8)).unwrap();
                 *v = format!("{v} ({})", clue_info.length);
@@ -61,14 +55,17 @@ impl PuzzleState {
             });
         }
 
+        let json_output_path = args.json_output_path.as_ref().unwrap().clone();
+
         Ok(PuzzleState {
             puzzle,
             clues_info,
-            puzzle_path: puzzle_file_path,
+            puzzle_path: args.puzzle_file_path.clone(),
             json_output_path,
-            nord_colors,
-            hide_completed_clues,
-            show_clue_length,
+            nord_colors: args.nord_colors,
+            hide_completed_clues: args.hide_completed_clues,
+            show_clue_length: args.show_clue_length,
+            pdf_style: args.pdf_style.unwrap(),
         })
     }
 
@@ -83,10 +80,6 @@ impl PuzzleState {
         let file = File::create(&self.json_output_path)?;
         serde_json::to_writer(file, &self.puzzle)?;
         Ok(())
-    }
-
-    pub fn get_puz_json(&self) -> Result<String, serde_json::Error> {
-        serde_json::to_string(&self.puzzle)
     }
 
     fn print_puzzle(&self) {
@@ -303,6 +296,7 @@ impl PuzzleState {
         loop {
             if self.puzzle.grid.blank == self.puzzle.grid.solution {
                 println!("Congratulations! You've solved the puzzle!");
+                self.write_puzzle_to_json()?;
                 break;
             }
 
@@ -503,4 +497,7 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
         across: across_clues,
         down: down_clues,
     }
+}
+pub fn get_puz_json(puzzle: &Puzzle) -> Result<String, serde_json::Error> {
+    serde_json::to_string(&puzzle)
 }

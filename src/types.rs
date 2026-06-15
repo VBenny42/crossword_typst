@@ -26,6 +26,7 @@ pub struct PuzzleState {
     pub nord_colors: bool,
     pub hide_completed_clues: bool,
     pub show_clue_length: bool,
+    pub pdf_style: PdfStyle,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -50,6 +51,25 @@ impl FromStr for Direction {
             "1" => Ok(Direction::Across),
             "2" => Ok(Direction::Down),
             _ => Err(format!("Invalid direction number: {}", s)),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Copy)]
+pub enum PdfStyle {
+    Normal,
+    Larger,
+    Landscape,
+}
+
+impl FromStr for PdfStyle {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Normal" => Ok(PdfStyle::Normal),
+            "Larger" => Ok(PdfStyle::Larger),
+            "Landscape" => Ok(PdfStyle::Landscape),
+            _ => Err(format!("Invalid PdfStyle: {}", s)),
         }
     }
 }

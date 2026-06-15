@@ -35,7 +35,7 @@
   let puzzle_grid = puzzle.grid.at("blank")
 
   // Allotted space should be 3/4 of usable page width
-  let puzzle_width = (8.5in - 0.5in) * (3 / 4)
+  let puzzle_width = (8.5in - 0.5in) * (4 / 4)
   let box_unit = puzzle_width / puzzle.info.width
 
   let wrong_letter_exists = false
@@ -190,80 +190,80 @@
     }
   ]
 
+  align(
+    center,
+    grid(
+      columns: range(puzzle.info.width).map(_ => box_unit),
+      rows: range(puzzle.info.height).map(_ => box_unit),
+      gutter: 0in,
+      inset: 0.5mm,
+      ..for y in range(puzzle.info.height) {
+        for x in range(puzzle.info.width) {
+          let cell = puzzle_grid.at(y).clusters().at(x)
+          let key = str(x) + "," + str(y)
+          let num = number_to_coord.at(key, default: none)
+          (
+            box(
+              width: box_unit,
+              height: box_unit,
+              fill: if cell == BLACK_CELL { foreground_color } else {
+                background_color
+              },
+              clip: true,
+              stroke: (paint: foreground_color, thickness: 1pt),
+
+              {
+                if cell != BLACK_CELL {
+                  place(
+                    horizon + center,
+                    text(weight: "medium", size: box_unit * 0.625, if cell
+                      == BLANK_CELL {
+                      ""
+                    } else {
+                      cell
+                    }),
+                  )
+                  if puzzle.extensions.circles != none {
+                    if puzzle.extensions.circles.at(y).at(x) {
+                      place(center + horizon, circle(
+                        radius: (box_unit / 2) - 1pt,
+                        stroke: (
+                          paint: foreground_color.lighten(60%),
+                          dash: "densely-dotted",
+                        ),
+                      ))
+                    }
+                  }
+                  if num != none {
+                    place(
+                      top + left,
+                      dx: box_unit * 0.05,
+                      dy: box_unit * 0.05,
+                      text(
+                        size: box_unit * 0.25,
+                        str(num),
+                      ),
+                    )
+                  }
+                }
+              },
+            ),
+          )
+        }
+      }
+    ),
+  )
+
   grid(
-    columns: (1fr, 3fr),
+    columns: (2fr, 2fr),
     gutter: 0.05in,
 
     {
-      across_clues
+      columns(2)[#across_clues]
     },
 
     {
-      align(
-        center,
-        grid(
-          columns: range(puzzle.info.width).map(_ => box_unit),
-          rows: range(puzzle.info.height).map(_ => box_unit),
-          gutter: 0in,
-          inset: 0.5mm,
-          ..for y in range(puzzle.info.height) {
-            for x in range(puzzle.info.width) {
-              let cell = puzzle_grid.at(y).clusters().at(x)
-              let key = str(x) + "," + str(y)
-              let num = number_to_coord.at(key, default: none)
-              (
-                box(
-                  width: box_unit,
-                  height: box_unit,
-                  fill: if cell == BLACK_CELL { foreground_color } else {
-                    background_color
-                  },
-                  clip: true,
-                  stroke: (paint: foreground_color, thickness: 1pt),
-
-                  {
-                    if cell != BLACK_CELL {
-                      place(
-                        horizon + center,
-                        text(weight: "medium", size: box_unit * 0.625, if cell
-                          == BLANK_CELL {
-                          ""
-                        } else {
-                          cell
-                        }),
-                      )
-                      if puzzle.extensions.circles != none {
-                        if puzzle.extensions.circles.at(y).at(x) {
-                          place(center + horizon, circle(
-                            radius: (box_unit / 2) - 1pt,
-                            stroke: (
-                              paint: foreground_color.lighten(60%),
-                              dash: "densely-dotted",
-                            ),
-                          ))
-                        }
-                      }
-                      if num != none {
-                        place(
-                          top + left,
-                          dx: box_unit * 0.05,
-                          dy: box_unit * 0.05,
-                          text(
-                            size: box_unit * 0.20,
-                            str(num),
-                          ),
-                        )
-                      }
-                    }
-                  },
-                ),
-              )
-            }
-          }
-        ),
-      )
-
-      columns(3)[#down_clues]
+      columns(2)[#down_clues]
     },
   )
 }

@@ -1,7 +1,10 @@
 use clap::{ArgAction::SetTrue, Parser};
 use std::{fs::File, path::PathBuf, str::FromStr};
 
-use crate::{pdfgen::compile_pdf, types::PuzzleState};
+use crate::{
+    pdfgen::compile_pdf,
+    types::{PdfStyle, PuzzleState},
+};
 
 mod pdfgen;
 mod puzzle;
@@ -20,7 +23,7 @@ fn input<T: FromStr>() -> Result<T, <T as FromStr>::Err> {
 }
 
 #[derive(Parser, Debug)]
-struct Args {
+pub struct Args {
     #[arg(short, long, default_value = JSON_OUTPUT_PATH, help="Path to where json should be saved")]
     json_output_path: Option<PathBuf>,
 
@@ -38,18 +41,15 @@ struct Args {
 
     #[arg(short, long, action = SetTrue, help = "Show word length for a clue in the PDF")]
     show_clue_length: bool,
+
+    #[arg(long, default_value = "Normal", help = "Style of PDF to be generated")]
+    pdf_style: Option<PdfStyle>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    let mut state = PuzzleState::new(
-        args.puzzle_file_path,
-        args.json_output_path.unwrap(),
-        args.nord_colors,
-        args.hide_completed_clues,
-        args.show_clue_length,
-    )?;
+    let mut state = PuzzleState::new(&args)?;
 
     if File::open(&state.json_output_path).is_ok() {
     } else {

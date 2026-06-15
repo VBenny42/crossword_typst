@@ -1,6 +1,6 @@
 #import sys: inputs
 
-#set page(paper: "us-letter")
+#set page(paper: "us-letter", flipped: true)
 #set page(margin: (left: 0.25in, right: 0.25in, top: 0.5in, bottom: 0.5in))
 #set text(size: 14pt)
 // #set text(font: "Helvetica")
@@ -35,7 +35,7 @@
   let puzzle_grid = puzzle.grid.at("blank")
 
   // Allotted space should be 3/4 of usable page width
-  let puzzle_width = (8.5in - 0.5in) * (3 / 4)
+  let puzzle_width = (8.5in - 0.5in) * (4 / 4)
   let box_unit = puzzle_width / puzzle.info.width
 
   let wrong_letter_exists = false
@@ -191,11 +191,14 @@
   ]
 
   grid(
-    columns: (1fr, 3fr),
-    gutter: 0.05in,
+    columns: (0.75fr, 0.75fr, auto),
+    gutter: 0in,
 
     {
       across_clues
+    },
+    {
+      down_clues
     },
 
     {
@@ -238,6 +241,7 @@
                             radius: (box_unit / 2) - 1pt,
                             stroke: (
                               paint: foreground_color.lighten(60%),
+                              thickness: 1pt,
                               dash: "densely-dotted",
                             ),
                           ))
@@ -262,8 +266,6 @@
           }
         ),
       )
-
-      columns(3)[#down_clues]
     },
   )
 }
