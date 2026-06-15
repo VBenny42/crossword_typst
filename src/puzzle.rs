@@ -366,6 +366,7 @@ impl PuzzleState {
                 }
                 Ok("7") => {
                     println!("Exiting...");
+                    self.write_puzzle_to_json()?;
                     break;
                 }
                 Ok(s) if s.starts_with('1') || s.starts_with('2') => {
@@ -383,13 +384,12 @@ impl PuzzleState {
 
                     should_compile = true;
                 }
-                Ok(_) => println!("Invalid choice, please try again."),
+                Ok(s) => println!("Invalid choice, please try again. {s}"),
                 Err(e) => println!("Invalid input, please enter a number. Error: {e}"),
             }
 
             if should_compile {
                 compile_pdf(self);
-                self.write_puzzle_to_json()?;
             }
         }
 
