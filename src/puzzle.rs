@@ -42,6 +42,22 @@ macro_rules! try_or_continue {
 impl PuzzleState {
     pub fn new(args: &crate::Args) -> Result<Self, Box<dyn Error>> {
         let mut puzzle = initialize_puzzle(&args.puzzle_file_path)?;
+
+        if File::open(&args.json_output_path).is_ok() {
+        } else {
+            println!("JSON file does not exist. Creating a new one...");
+            write_puzzle_to_json(&args.json_output_path, &puzzle)?;
+        };
+
+        let read_puzzle = read_puzzle_from_json(&args.json_output_path)?;
+
+        if read_puzzle.info.title == puzzle.info.title {
+            puzzle.grid.blank.clone_from(&read_puzzle.grid.blank);
+        } else {
+            eprintln!("Warning: The puzzle title in the JSON file does not match the original puzzle. Overwriting JSON file with blank puzzle data...");
+            write_puzzle_to_json(&args.json_output_path, &puzzle)?;
+        }
+
         let clues_info = extract_clue_info(&puzzle);
 
         if args.show_clue_length {
@@ -55,31 +71,16 @@ impl PuzzleState {
             });
         }
 
-        let json_output_path = args.json_output_path.as_ref().unwrap().clone();
-
         Ok(PuzzleState {
             puzzle,
             clues_info,
             puzzle_path: args.puzzle_file_path.clone(),
-            json_output_path,
+            json_output_path: args.json_output_path.clone(),
             nord_colors: args.nord_colors,
             hide_completed_clues: args.hide_completed_clues,
             show_clue_length: args.show_clue_length,
             pdf_style: args.pdf_style.unwrap(),
         })
-    }
-
-    pub fn read_puzzle_from_json(&self) -> Result<Puzzle, Box<dyn Error>> {
-        let file = File::open(&self.json_output_path)?;
-        let reader = std::io::BufReader::new(file);
-        let puzzle = serde_json::from_reader(reader)?;
-        Ok(puzzle)
-    }
-
-    pub fn write_puzzle_to_json(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let file = File::create(&self.json_output_path)?;
-        serde_json::to_writer(file, &self.puzzle)?;
-        Ok(())
     }
 
     fn print_puzzle(&self) {
@@ -296,7 +297,7 @@ impl PuzzleState {
         loop {
             if self.puzzle.grid.blank == self.puzzle.grid.solution {
                 println!("Congratulations! You've solved the puzzle!");
-                self.write_puzzle_to_json()?;
+                write_puzzle_to_json(&self.json_output_path, &self.puzzle)?;
                 break;
             }
 
@@ -360,7 +361,7 @@ impl PuzzleState {
                 }
                 Ok("7") => {
                     println!("Exiting...");
-                    self.write_puzzle_to_json()?;
+                    write_puzzle_to_json(&self.json_output_path, &self.puzzle)?;
                     break;
                 }
                 Ok(s) if s.starts_with('1') || s.starts_with('2') => {
@@ -402,6 +403,7 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
 
     let mut clue_number = 1;
 
+    // TODO: Figure out a way to specify y and x as usize
     for y in 0..puzzle.info.height {
         for x in 0..puzzle.info.width {
             let cell = puzzle.grid.blank[y as usize]
@@ -500,4 +502,20 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
 }
 pub fn get_puz_json(puzzle: &Puzzle) -> Result<String, serde_json::Error> {
     serde_json::to_string(&puzzle)
+}
+
+pub fn read_puzzle_from_json(json_output_path: &PathBuf) -> Result<Puzzle, Box<dyn Error>> {
+    let file = File::open(json_output_path)?;
+    let reader = std::io::BufReader::new(file);
+    let puzzle = serde_json::from_reader(reader)?;
+    Ok(puzzle)
+}
+
+pub fn write_puzzle_to_json(
+    json_output_path: &PathBuf,
+    puzzle: &Puzzle,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let file = File::create(json_output_path)?;
+    serde_json::to_writer(file, &puzzle)?;
+    Ok(())
 }

@@ -1,5 +1,10 @@
 use clap::{ArgAction::SetTrue, Parser};
-use std::{fs::File, path::PathBuf, str::FromStr};
+use directories::ProjectDirs;
+use std::{
+    fs::{self},
+    path::PathBuf,
+    str::FromStr,
+};
 
 use crate::{
     pdfgen::compile_pdf,
@@ -10,7 +15,15 @@ mod pdfgen;
 mod puzzle;
 mod types;
 
-static JSON_OUTPUT_PATH: &str = "target/output.json";
+fn default_json_path() -> PathBuf {
+    ProjectDirs::from("com", "VBenny42", "crossword_typst")
+        .map(|dirs| {
+            let data_dir = dirs.data_dir().to_path_buf();
+            fs::create_dir_all(&data_dir).ok();
+            data_dir.join("output.json")
+        })
+        .unwrap_or_else(|| PathBuf::from("output.json"))
+}
 
 fn input<T: FromStr>() -> Result<T, <T as FromStr>::Err> {
     let mut input: String = String::with_capacity(64);
@@ -24,8 +37,8 @@ fn input<T: FromStr>() -> Result<T, <T as FromStr>::Err> {
 
 #[derive(Parser, Debug)]
 pub struct Args {
-    #[arg(short, long, default_value = JSON_OUTPUT_PATH, help="Path to where json should be saved")]
-    json_output_path: Option<PathBuf>,
+    #[arg(short, long, default_value_os_t = default_json_path(), help="Path to where json should be saved")]
+    json_output_path: PathBuf,
 
     #[arg(short, long, help = "Path to .puz file to be read")]
     puzzle_file_path: std::path::PathBuf,
@@ -42,7 +55,11 @@ pub struct Args {
     #[arg(short, long, action = SetTrue, help = "Show word length for a clue in the PDF")]
     show_clue_length: bool,
 
-    #[arg(long, default_value = "Normal", help = "Style of PDF to be generated")]
+    #[arg(
+        long,
+        default_value = "Normal",
+        help = "Style of PDF to be generated. Can be Normal, Larger or Landscape"
+    )]
     pdf_style: Option<PdfStyle>,
 }
 
@@ -50,21 +67,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
     let mut state = PuzzleState::new(&args)?;
-
-    if File::open(&state.json_output_path).is_ok() {
-    } else {
-        println!("JSON file does not exist. Creating a new one...");
-        state.write_puzzle_to_json()?;
-    }
-
-    let read_puzzle = state.read_puzzle_from_json()?;
-
-    if read_puzzle.info.title == state.puzzle.info.title {
-        state.puzzle.grid.blank.clone_from(&read_puzzle.grid.blank);
-    } else {
-        eprintln!("Warning: The puzzle title in the JSON file does not match the original puzzle. Overwriting JSON file with blank puzzle data...");
-        state.write_puzzle_to_json()?;
-    }
 
     if args.write_to_json_only {
         return Ok(());

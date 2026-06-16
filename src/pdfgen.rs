@@ -13,7 +13,7 @@ use crate::{
 static TEMPLATE_NORMAL_FILE: &str = include_str!("../templates/template.typ");
 static TEMPLATE_LARGER_FILE: &str = include_str!("../templates/template-larger.typ");
 static TEMPLATE_LANDSCAPE_FILE: &str = include_str!("../templates/template-landscape.typ");
-static PDF_OUTPUT_PATH: &str = "./target/crossword.pdf";
+static PDF_OUTPUT_PATH: &str = "./crossword.pdf";
 
 pub fn compile_pdf(state: &PuzzleState) {
     let template_file = match state.pdf_style {

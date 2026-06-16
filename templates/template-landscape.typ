@@ -156,6 +156,9 @@
     }
   ]
 
+  // determine how many clues fit on page with crossword and use that for first page,
+  // for rest of pages let columns fill the page
+
   let down_clues = [
     ==== Down
     #for clue in sorted_down {
@@ -182,7 +185,10 @@
       let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
 
       if word_solved {
-        if inputs.hide_completed_clues { continue }
+        if (
+          inputs.hide_completed_clues == "true"
+            or inputs.hide_completed_clues == true
+        ) { continue }
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
