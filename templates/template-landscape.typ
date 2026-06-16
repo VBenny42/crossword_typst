@@ -41,6 +41,10 @@
     puzzle_height / puzzle.info.height,
   )
 
+  // Need to tune these per puzzle
+  let across_clues_first_page_limit = 17
+  let down_clues_first_page_limit = 22
+
   let wrong_letter_exists = false
   let space_exists = false
 
@@ -114,102 +118,117 @@
     .pairs()
     .sorted(key: clue => int(clue.at(0))) // sort by clue number
 
-  let across_clues = [
-    ==== Across
-    #for clue in sorted_across {
-      let clue_num = clue.at(0)
+  let across_clues_array = ()
 
-      let clue_coord = coord_to_number.at(clue_num, default: none)
-      let word_solved = false
-      let (x, y) = clue_coord
+  for clue in sorted_across {
+    let clue_num = clue.at(0)
 
-      while x <= puzzle.info.width {
-        let next_cell = puzzle_grid.at(y).clusters().at(x)
-        // let solution_cell = puzzle.grid.solution.at(y).clusters().at(x)
-        // if next_cell == BLANK_CELL or next_cell != solution_cell {
-        if next_cell == BLANK_CELL {
-          break
-        }
-        if next_cell == BLACK_CELL or x + 1 == puzzle.info.width {
-          word_solved = true
-          break
-        }
-        x += 1
+    let clue_coord = coord_to_number.at(clue_num, default: none)
+    let word_solved = false
+    let (x, y) = clue_coord
+
+    while x <= puzzle.info.width {
+      let next_cell = puzzle_grid.at(y).clusters().at(x)
+      if next_cell == BLANK_CELL {
+        break
       }
-
-      if word_solved {
-        if (
-          inputs.hide_completed_clues == "true"
-            or inputs.hide_completed_clues == true
-        ) { continue }
-        strike(
-          background: true,
-          stroke: (paint: red_color, thickness: 2pt),
-          text(
-            size: 9pt,
-          )[*#clue.at(0).* #clue.at(1)],
-        )
-      } else {
-        text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
+      if next_cell == BLACK_CELL or x + 1 == puzzle.info.width {
+        word_solved = true
+        break
       }
-      linebreak()
+      x += 1
     }
-  ]
 
-  // determine how many clues fit on page with crossword and use that for first page,
-  // for rest of pages let columns fill the page
+    let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
 
-  let down_clues = [
-    ==== Down
-    #for clue in sorted_down {
-      let clue_num = clue.at(0)
-
-      let clue_coord = coord_to_number.at(clue_num, default: none)
-      let word_solved = false
-      let (x, y) = clue_coord
-
-      while y <= puzzle.info.height {
-        let next_cell = puzzle_grid.at(y).clusters().at(x)
-        // let solution_cell = puzzle.grid.solution.at(y).clusters().at(x)
-        // if next_cell == BLANK_CELL or next_cell != solution_cell {
-        if next_cell == BLANK_CELL {
-          break
-        }
-        if next_cell == BLACK_CELL or y + 1 == puzzle.info.height {
-          word_solved = true
-          break
-        }
-        y += 1
-      }
-
-      let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
-
-      if word_solved {
-        if (
-          inputs.hide_completed_clues == "true"
-            or inputs.hide_completed_clues == true
-        ) { continue }
+    if word_solved {
+      if (
+        inputs.hide_completed_clues == "true"
+          or inputs.hide_completed_clues == true
+      ) { continue }
+      across_clues_array.push(
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
           clue_text,
-        )
-      } else {
-        clue_text
-      }
-      linebreak()
+        ),
+      )
+    } else {
+      across_clues_array.push(clue_text)
     }
-  ]
+  }
+
+  let down_clues_array = ()
+
+  for clue in sorted_down {
+    let clue_num = clue.at(0)
+
+    let clue_coord = coord_to_number.at(clue_num, default: none)
+    let word_solved = false
+    let (x, y) = clue_coord
+
+    while y <= puzzle.info.height {
+      let next_cell = puzzle_grid.at(y).clusters().at(x)
+      // let solution_cell = puzzle.grid.solution.at(y).clusters().at(x)
+      // if next_cell == BLANK_CELL or next_cell != solution_cell {
+      if next_cell == BLANK_CELL {
+        break
+      }
+      if next_cell == BLACK_CELL or y + 1 == puzzle.info.height {
+        word_solved = true
+        break
+      }
+      y += 1
+    }
+
+    let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
+
+    if word_solved {
+      if (
+        inputs.hide_completed_clues == "true"
+          or inputs.hide_completed_clues == true
+      ) { continue }
+      down_clues_array.push(
+        strike(
+          background: true,
+          stroke: (paint: red_color, thickness: 2pt),
+          clue_text,
+        ),
+      )
+    } else {
+      down_clues_array.push(clue_text)
+    }
+  }
 
   grid(
     columns: (0.75fr, 0.75fr, auto),
     gutter: 0.01in,
 
     {
-      across_clues
+      [
+        ==== Across
+        #(
+          across_clues_array
+            .slice(0, across_clues_first_page_limit)
+            .map(clue_content => {
+              clue_content + linebreak()
+            })
+            .join()
+        )
+      ]
     },
     {
-      down_clues
+      [
+        ==== Down
+        #(
+          down_clues_array
+            .slice(0, down_clues_first_page_limit)
+            .map(clue_content => {
+              clue_content + linebreak()
+            })
+            .join()
+        )
+      ]
     },
 
     {
@@ -279,6 +298,34 @@
       )
     },
   )
+
+  if (
+    across_clues_array.len() > across_clues_first_page_limit
+      or down_clues_array.len() > down_clues_first_page_limit
+  ) {
+    pagebreak()
+    columns(4)[
+      ==== Across (Continued)
+      #(
+        across_clues_array
+          .slice(across_clues_first_page_limit)
+          .map(clue_content => {
+            clue_content + linebreak()
+          })
+          .join()
+      )
+      #colbreak()
+      ==== Down (Continued)
+      #(
+        down_clues_array
+          .slice(down_clues_first_page_limit)
+          .map(clue_content => {
+            clue_content + linebreak()
+          })
+          .join()
+      )
+    ]
+  }
 }
 
 #let puzzle_json = json(bytes(inputs.crossword_json))
