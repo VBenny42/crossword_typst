@@ -295,9 +295,9 @@ impl PuzzleState {
         let mut should_compile = false;
 
         loop {
+            write_puzzle_to_json(&self.json_output_path, &self.puzzle)?;
             if self.puzzle.grid.blank == self.puzzle.grid.solution {
                 println!("Congratulations! You've solved the puzzle!");
-                write_puzzle_to_json(&self.json_output_path, &self.puzzle)?;
                 break;
             }
 

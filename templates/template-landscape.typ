@@ -31,6 +31,20 @@
 #let BLANK_CELL = "-"
 #let BLACK_CELL = "."
 
+#let get_clue_content(clues_array, initial_limit, direction) = {
+  [
+    ==== #direction
+    #(
+      clues_array
+        .slice(0, initial_limit)
+        .map(clue_content => {
+          clue_content + linebreak()
+        })
+        .join()
+    )
+  ]
+}
+
 #let crossword(puzzle) = {
   let puzzle_grid = puzzle.grid.at("blank")
 
@@ -40,10 +54,6 @@
     puzzle_width / puzzle.info.width,
     puzzle_height / puzzle.info.height,
   )
-
-  // Need to tune these per puzzle
-  let across_clues_first_page_limit = 17
-  let down_clues_first_page_limit = 22
 
   let wrong_letter_exists = false
   let space_exists = false
@@ -200,35 +210,27 @@
     }
   }
 
+  // Need to tune these per puzzle
+  let across_clues_first_page_limit = calc.min(28, across_clues_array.len())
+  let down_clues_first_page_limit = calc.min(30, down_clues_array.len())
+
   grid(
     columns: (0.75fr, 0.75fr, auto),
     gutter: 0.01in,
 
     {
-      [
-        ==== Across
-        #(
-          across_clues_array
-            .slice(0, across_clues_first_page_limit)
-            .map(clue_content => {
-              clue_content + linebreak()
-            })
-            .join()
-        )
-      ]
+      get_clue_content(
+        across_clues_array,
+        across_clues_first_page_limit,
+        "Across",
+      )
     },
     {
-      [
-        ==== Down
-        #(
-          down_clues_array
-            .slice(0, down_clues_first_page_limit)
-            .map(clue_content => {
-              clue_content + linebreak()
-            })
-            .join()
-        )
-      ]
+      get_clue_content(
+        down_clues_array,
+        down_clues_first_page_limit,
+        "Down",
+      )
     },
 
     {
