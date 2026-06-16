@@ -31,20 +31,6 @@
 #let BLANK_CELL = "-"
 #let BLACK_CELL = "."
 
-#let get_clue_content(clues_array, initial_limit, direction) = {
-  [
-    ==== #direction
-    #(
-      clues_array
-        .slice(0, initial_limit)
-        .map(clue_content => {
-          clue_content + linebreak()
-        })
-        .join()
-    )
-  ]
-}
-
 #let crossword(puzzle) = {
   let puzzle_grid = puzzle.grid.at("blank")
 
@@ -120,13 +106,13 @@
     .clues
     .at("across")
     .pairs()
-    .sorted(key: clue => int(clue.at(0))) // sort by clue number
+    .sorted(key: clue => int(clue.at(0)))
 
   let sorted_down = puzzle
     .clues
     .at("down")
     .pairs()
-    .sorted(key: clue => int(clue.at(0))) // sort by clue number
+    .sorted(key: clue => int(clue.at(0)))
 
   let across_clues_array = ()
 
@@ -161,10 +147,11 @@
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
           clue_text,
-        ),
+        )
+          + linebreak(),
       )
     } else {
-      across_clues_array.push(clue_text)
+      across_clues_array.push(clue_text + linebreak())
     }
   }
 
@@ -179,8 +166,6 @@
 
     while y <= puzzle.info.height {
       let next_cell = puzzle_grid.at(y).clusters().at(x)
-      // let solution_cell = puzzle.grid.solution.at(y).clusters().at(x)
-      // if next_cell == BLANK_CELL or next_cell != solution_cell {
       if next_cell == BLANK_CELL {
         break
       }
@@ -203,131 +188,146 @@
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
           clue_text,
-        ),
+        )
+          + linebreak(),
       )
     } else {
-      down_clues_array.push(clue_text)
+      down_clues_array.push(clue_text + linebreak())
     }
   }
 
-  // Need to tune these per puzzle
-  let across_clues_first_page_limit = calc.min(28, across_clues_array.len())
-  let down_clues_first_page_limit = calc.min(30, down_clues_array.len())
+  layout(size => {
+    let available_height = size.height
 
-  grid(
-    columns: (0.75fr, 0.75fr, auto),
-    gutter: 0.01in,
+    let grid_width = box_unit * puzzle.info.width
+    let clue_col_width = (size.width - grid_width - 0.02in) * (0.75 / 1.5)
 
-    {
-      get_clue_content(
-        across_clues_array,
-        across_clues_first_page_limit,
-        "Across",
-      )
-    },
-    {
-      get_clue_content(
-        down_clues_array,
-        down_clues_first_page_limit,
-        "Down",
-      )
-    },
+    let accumulated = 0pt
+    let across_split_index = across_clues_array.len()
 
-    {
-      align(
-        center,
-        grid(
-          columns: range(puzzle.info.width).map(_ => box_unit),
-          rows: range(puzzle.info.height).map(_ => box_unit),
-          gutter: 0in,
-          inset: 0.5mm,
-          ..for y in range(puzzle.info.height) {
-            for x in range(puzzle.info.width) {
-              let cell = puzzle_grid.at(y).clusters().at(x)
-              let key = str(x) + "," + str(y)
-              let num = number_to_coord.at(key, default: none)
-              (
-                box(
-                  width: box_unit,
-                  height: box_unit,
-                  fill: if cell == BLACK_CELL { foreground_color } else {
-                    background_color
-                  },
-                  clip: true,
-                  stroke: (paint: foreground_color, thickness: 1pt),
+    for (i, clue) in across_clues_array.enumerate() {
+      let h = measure(clue, width: clue_col_width).height
+      accumulated += h + 9pt // Add 9pts for leading? idrk
+      if accumulated > available_height {
+        across_split_index = i
+        break
+      }
+    }
 
-                  {
-                    if cell != BLACK_CELL {
-                      place(
-                        horizon + center,
-                        text(weight: "medium", size: box_unit * 0.625, if cell
-                          == BLANK_CELL {
-                          ""
-                        } else {
-                          cell
-                        }),
-                      )
-                      if puzzle.extensions.circles != none {
-                        if puzzle.extensions.circles.at(y).at(x) {
-                          place(center + horizon, circle(
-                            radius: (box_unit / 2) - 1pt,
-                            stroke: (
-                              paint: foreground_color.lighten(60%),
-                              thickness: 1pt,
-                              dash: "densely-dotted",
+    let accumulated = 0pt
+    let down_split_index = down_clues_array.len()
+
+    for (i, clue) in down_clues_array.enumerate() {
+      let h = measure(clue, width: clue_col_width).height
+      accumulated += h + 9pt
+      if accumulated > available_height {
+        down_split_index = i
+        break
+      }
+    }
+
+    grid(
+      columns: (0.75fr, 0.75fr, auto),
+      gutter: 0.01in,
+
+      {
+        [==== Across
+          #(
+            across_clues_array.slice(0, across_split_index).join()
+          )]
+      },
+      {
+        [==== Down
+          #(
+            down_clues_array.slice(0, down_split_index).join()
+          )]
+      },
+
+      {
+        align(
+          center,
+          grid(
+            columns: range(puzzle.info.width).map(_ => box_unit),
+            rows: range(puzzle.info.height).map(_ => box_unit),
+            gutter: 0in,
+            inset: 0.5mm,
+            ..for y in range(puzzle.info.height) {
+              for x in range(puzzle.info.width) {
+                let cell = puzzle_grid.at(y).clusters().at(x)
+                let key = str(x) + "," + str(y)
+                let num = number_to_coord.at(key, default: none)
+                (
+                  box(
+                    width: box_unit,
+                    height: box_unit,
+                    fill: if cell == BLACK_CELL { foreground_color } else {
+                      background_color
+                    },
+                    clip: true,
+                    stroke: (paint: foreground_color, thickness: 1pt),
+
+                    {
+                      if cell != BLACK_CELL {
+                        place(
+                          horizon + center,
+                          text(weight: "medium", size: box_unit * 0.625, if cell
+                            == BLANK_CELL {
+                            ""
+                          } else {
+                            cell
+                          }),
+                        )
+                        if puzzle.extensions.circles != none {
+                          if puzzle.extensions.circles.at(y).at(x) {
+                            place(center + horizon, circle(
+                              radius: (box_unit / 2) - 1pt,
+                              stroke: (
+                                paint: foreground_color.lighten(60%),
+                                thickness: 1pt,
+                                dash: "densely-dotted",
+                              ),
+                            ))
+                          }
+                        }
+                        if num != none {
+                          place(
+                            top + left,
+                            dx: box_unit * 0.05,
+                            dy: box_unit * 0.05,
+                            text(
+                              size: box_unit * 0.20,
+                              str(num),
                             ),
-                          ))
+                          )
                         }
                       }
-                      if num != none {
-                        place(
-                          top + left,
-                          dx: box_unit * 0.05,
-                          dy: box_unit * 0.05,
-                          text(
-                            size: box_unit * 0.20,
-                            str(num),
-                          ),
-                        )
-                      }
-                    }
-                  },
-                ),
-              )
+                    },
+                  ),
+                )
+              }
             }
-          }
-        ),
-      )
-    },
-  )
+          ),
+        )
+      },
+    )
 
-  if (
-    across_clues_array.len() > across_clues_first_page_limit
-      or down_clues_array.len() > down_clues_first_page_limit
-  ) {
-    pagebreak()
-    columns(4)[
-      ==== Across (Continued)
-      #(
-        across_clues_array
-          .slice(across_clues_first_page_limit)
-          .map(clue_content => {
-            clue_content + linebreak()
-          })
-          .join()
-      )
-      #colbreak()
-      ==== Down (Continued)
-      #(
-        down_clues_array
-          .slice(down_clues_first_page_limit)
-          .map(clue_content => {
-            clue_content + linebreak()
-          })
-          .join()
-      )
-    ]
-  }
+    if (
+      across_clues_array.len() > across_split_index
+        or down_clues_array.len() > down_split_index
+    ) {
+      columns(4)[
+        ==== Across (Continued)
+        #(
+          across_clues_array.slice(across_split_index).join()
+        )
+        #colbreak()
+        ==== Down (Continued)
+        #(
+          down_clues_array.slice(down_split_index).join()
+        )
+      ]
+    }
+  })
 }
 
 #let puzzle_json = json(bytes(inputs.crossword_json))
