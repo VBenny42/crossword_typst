@@ -3,8 +3,8 @@
 #set page(paper: "us-letter", flipped: true)
 #set page(margin: (left: 0.25in, right: 0.25in, top: 0.5in, bottom: 0.5in))
 #set text(size: 14pt)
-// #set text(font: "Helvetica")
-#set text(font: "Arial")
+#set text(font: "Helvetica")
+// #set text(font: "Arial")
 
 
 // white and black colors
@@ -85,8 +85,10 @@
     }
   }
 
+  let is_finished = not space_exists and not wrong_letter_exists
+
   set page(
-    header: if not space_exists and not wrong_letter_exists {
+    header: if is_finished {
       [#puzzle.info.title #h(1fr) _Finished_]
     } else if wrong_letter_exists == true {
       [#puzzle.info.title #h(1fr) #text(
@@ -139,8 +141,11 @@
 
     if word_solved {
       if (
-        inputs.hide_completed_clues == "true"
-          or inputs.hide_completed_clues == true
+        (
+          inputs.hide_completed_clues == "true"
+            or inputs.hide_completed_clues == true
+        )
+          and not is_finished
       ) { continue }
       across_clues_array.push(
         strike(
@@ -180,8 +185,11 @@
 
     if word_solved {
       if (
-        inputs.hide_completed_clues == "true"
-          or inputs.hide_completed_clues == true
+        (
+          inputs.hide_completed_clues == "true"
+            or inputs.hide_completed_clues == true
+        )
+          and not is_finished
       ) { continue }
       down_clues_array.push(
         strike(
@@ -202,26 +210,33 @@
     let grid_width = box_unit * puzzle.info.width
     let clue_col_width = (size.width - grid_width - 0.02in) * (0.75 / 1.5)
 
-    let accumulated = 0pt
     let across_split_index = across_clues_array.len()
+    // Assuming a minimum of 15 items can always fit
+    let start = calc.min(15, across_clues_array.len())
 
-    for (i, clue) in across_clues_array.enumerate() {
-      let h = measure(clue, width: clue_col_width).height
-      accumulated += h + 9pt // Add 9pts for leading? idrk
-      if accumulated > available_height {
-        across_split_index = i
+    for i in range(start, across_clues_array.len() + 1) {
+      let test_content = [==== Across
+        #(across_clues_array.slice(0, i).join())]
+
+      let h = measure(test_content, width: clue_col_width).height
+
+      if h > available_height {
+        across_split_index = i - 1
         break
       }
     }
 
-    let accumulated = 0pt
     let down_split_index = down_clues_array.len()
+    start = calc.min(15, down_clues_array.len())
 
-    for (i, clue) in down_clues_array.enumerate() {
-      let h = measure(clue, width: clue_col_width).height
-      accumulated += h + 9pt
-      if accumulated > available_height {
-        down_split_index = i
+    for i in range(start, down_clues_array.len() + 1) {
+      let test_content = [==== Down
+        #(down_clues_array.slice(0, i).join())]
+
+      let h = measure(test_content, width: clue_col_width).height
+
+      if h > available_height {
+        down_split_index = i - 1
         break
       }
     }
@@ -316,15 +331,21 @@
         or down_clues_array.len() > down_split_index
     ) {
       columns(4)[
-        ==== Across (Continued)
-        #(
-          across_clues_array.slice(across_split_index).join()
-        )
-        #colbreak()
-        ==== Down (Continued)
-        #(
-          down_clues_array.slice(down_split_index).join()
-        )
+        #if across_clues_array.len() > across_split_index {
+          [
+            ==== Across (Continued)
+            #(
+              across_clues_array.slice(across_split_index).join()
+            )
+            #colbreak()
+          ]
+        }
+        #if down_clues_array.len() > down_split_index [
+          ==== Down (Continued)
+          #(
+            down_clues_array.slice(down_split_index).join()
+          )
+        ]
       ]
     }
   })
