@@ -116,7 +116,11 @@
     .pairs()
     .sorted(key: clue => int(clue.at(0)))
 
-  let across_clues_array = ()
+  let across_clues_solved = ()
+  let across_clues_unsolved = ()
+
+  let down_clues_unsolved = ()
+  let down_clues_solved = ()
 
   for clue in sorted_across {
     let clue_num = clue.at(0)
@@ -147,7 +151,7 @@
         )
           and not is_finished
       ) { continue }
-      across_clues_array.push(
+      across_clues_solved.push(
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
@@ -156,11 +160,9 @@
           + linebreak(),
       )
     } else {
-      across_clues_array.push(clue_text + linebreak())
+      across_clues_unsolved.push(clue_text + linebreak())
     }
   }
-
-  let down_clues_array = ()
 
   for clue in sorted_down {
     let clue_num = clue.at(0)
@@ -191,7 +193,7 @@
         )
           and not is_finished
       ) { continue }
-      down_clues_array.push(
+      down_clues_solved.push(
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
@@ -200,9 +202,12 @@
           + linebreak(),
       )
     } else {
-      down_clues_array.push(clue_text + linebreak())
+      down_clues_unsolved.push(clue_text + linebreak())
     }
   }
+
+  let across_clues_array = across_clues_unsolved + across_clues_solved
+  let down_clues_array = down_clues_unsolved + down_clues_solved
 
   layout(size => {
     let available_height = size.height
