@@ -45,7 +45,7 @@ impl PuzzleState {
 
         if File::open(&args.json_output_path).is_ok() {
         } else {
-            println!("JSON file does not exist. Creating a new one...");
+            eprintln!("JSON file does not exist. Creating a new one...");
             write_puzzle_to_json(&args.json_output_path, &puzzle)?;
         };
 
@@ -79,7 +79,7 @@ impl PuzzleState {
             nord_colors: args.nord_colors,
             hide_completed_clues: args.hide_completed_clues,
             show_clue_length: args.show_clue_length,
-            pdf_style: args.pdf_style.unwrap(),
+            pdf_style: args.pdf_style,
         })
     }
 
@@ -292,10 +292,9 @@ impl PuzzleState {
     }
 
     pub fn solve_puzzle(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let mut should_compile = false;
+        let mut should_recompile = false;
 
         loop {
-            write_puzzle_to_json(&self.json_output_path, &self.puzzle)?;
             if self.puzzle.grid.blank == self.puzzle.grid.solution {
                 println!("Congratulations! You've solved the puzzle!");
                 break;
@@ -317,17 +316,17 @@ impl PuzzleState {
                 Ok("1") => {
                     println!("You chose to solve an across clue.");
                     solve_clue_input!(self, Direction::Across);
-                    should_compile = true;
+                    should_recompile = true;
                 }
                 Ok("2") => {
                     println!("You chose to solve a down clue.");
                     solve_clue_input!(self, Direction::Down);
-                    should_compile = true;
+                    should_recompile = true;
                 }
                 Ok("3") => {
                     println!("Overwriting JSON file with blank puzzle data...");
                     let blank_puzzle = initialize_puzzle(&self.puzzle_path)?;
-                    should_compile = true;
+                    should_recompile = true;
                     self.puzzle.grid.blank.clone_from(&blank_puzzle.grid.blank);
                 }
                 Ok("4") => {
@@ -348,7 +347,7 @@ impl PuzzleState {
 
                     self.remove_clue_answer(clue_number, direction)?;
 
-                    should_compile = true;
+                    should_recompile = true;
                 }
                 Ok("6") => {
                     println!("Removing all wrong answers from the puzzle...");
@@ -356,7 +355,7 @@ impl PuzzleState {
                         println!("No wrong answers to remove!");
                     } else {
                         println!("Wrong answers found and removed.");
-                        should_compile = true;
+                        should_recompile = true;
                     }
                 }
                 Ok("7") => {
@@ -377,14 +376,19 @@ impl PuzzleState {
                         "Error solving clue:"
                     );
 
-                    should_compile = true;
+                    should_recompile = true;
                 }
                 Ok(s) => println!("Invalid choice, please try again. {s}"),
                 Err(e) => println!("Invalid input, please enter a number. Error: {e}"),
             }
 
-            if should_compile {
+            if should_recompile {
+                let start = std::time::Instant::now();
+
                 compile_pdf(self);
+                write_puzzle_to_json(&self.json_output_path, &self.puzzle)?;
+
+                println!("Took: {:?}", start.elapsed());
             }
         }
 
@@ -500,6 +504,7 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
         down: down_clues,
     }
 }
+
 pub fn get_puz_json(puzzle: &Puzzle) -> Result<String, serde_json::Error> {
     serde_json::to_string(&puzzle)
 }

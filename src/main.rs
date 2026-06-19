@@ -60,7 +60,7 @@ pub struct Args {
         default_value = "Normal",
         help = "Style of PDF to be generated. Can be Normal, Larger or Landscape"
     )]
-    pdf_style: Option<PdfStyle>,
+    pdf_style: PdfStyle,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

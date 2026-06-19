@@ -10,7 +10,7 @@
 // white and black colors
 #let background_color = white
 #let foreground_color = black
-#let red_color = red
+#let red_color = rgb("#DA2121")
 
 #if inputs.nord_colors == "true" or inputs.nord_colors == true {
   // // nord colors
@@ -116,11 +116,8 @@
     .pairs()
     .sorted(key: clue => int(clue.at(0)))
 
-  let across_clues_solved = ()
-  let across_clues_unsolved = ()
-
-  let down_clues_unsolved = ()
-  let down_clues_solved = ()
+  let across_clues_array = ()
+  let down_clues_array = ()
 
   for clue in sorted_across {
     let clue_num = clue.at(0)
@@ -151,16 +148,22 @@
         )
           and not is_finished
       ) { continue }
-      across_clues_solved.push(
-        strike(
-          background: true,
-          stroke: (paint: red_color, thickness: 2pt),
-          clue_text,
-        )
-          + linebreak(),
+      across_clues_array.push(
+        (
+          content: strike(
+            background: true,
+            stroke: (paint: red_color, thickness: 2pt),
+            clue_text,
+          )
+            + linebreak(),
+          solved: true,
+        ),
       )
     } else {
-      across_clues_unsolved.push(clue_text + linebreak())
+      across_clues_array.push((
+        content: clue_text + linebreak(),
+        solved: false,
+      ))
     }
   }
 
@@ -193,21 +196,24 @@
         )
           and not is_finished
       ) { continue }
-      down_clues_solved.push(
-        strike(
-          background: true,
-          stroke: (paint: red_color, thickness: 2pt),
-          clue_text,
-        )
-          + linebreak(),
+      down_clues_array.push(
+        (
+          content: strike(
+            background: true,
+            stroke: (paint: red_color, thickness: 2pt),
+            clue_text,
+          )
+            + linebreak(),
+          solved: true,
+        ),
       )
     } else {
-      down_clues_unsolved.push(clue_text + linebreak())
+      down_clues_array.push((content: clue_text + linebreak(), solved: false))
     }
   }
 
-  let across_clues_array = across_clues_unsolved + across_clues_solved
-  let down_clues_array = down_clues_unsolved + down_clues_solved
+  across_clues_array = across_clues_array.sorted(key: x => x.at("solved"))
+  down_clues_array = down_clues_array.sorted(key: x => x.at("solved"))
 
   layout(size => {
     let available_height = size.height
@@ -217,11 +223,12 @@
 
     let across_split_index = across_clues_array.len()
     // Assuming a minimum of 15 items can always fit
-    let start = calc.min(15, across_clues_array.len())
+    let start = calc.min(20, across_clues_array.len())
+    // across_split_index = start
 
     for i in range(start, across_clues_array.len() + 1) {
       let test_content = [==== Across
-        #(across_clues_array.slice(0, i).join())]
+        #(across_clues_array.slice(0, i).map(x => x.at("content")).join())]
 
       let h = measure(test_content, width: clue_col_width).height
 
@@ -232,11 +239,12 @@
     }
 
     let down_split_index = down_clues_array.len()
-    start = calc.min(15, down_clues_array.len())
+    start = calc.min(20, down_clues_array.len())
+    // down_split_index = start
 
     for i in range(start, down_clues_array.len() + 1) {
       let test_content = [==== Down
-        #(down_clues_array.slice(0, i).join())]
+        #(down_clues_array.slice(0, i).map(x => x.at("content")).join())]
 
       let h = measure(test_content, width: clue_col_width).height
 
@@ -253,13 +261,22 @@
       {
         [==== Across
           #(
-            across_clues_array.slice(0, across_split_index).join()
+            across_clues_array
+              .slice(0, across_split_index)
+              .map(x => x.at("content"))
+              .join()
           )]
       },
       {
         [==== Down
           #(
-            down_clues_array.slice(0, down_split_index).join()
+            down_clues_array
+              .slice(
+                0,
+                down_split_index,
+              )
+              .map(x => x.at("content"))
+              .join()
           )]
       },
 
@@ -340,7 +357,12 @@
           [
             ==== Across (Continued)
             #(
-              across_clues_array.slice(across_split_index).join()
+              across_clues_array
+                .slice(
+                  across_split_index,
+                )
+                .map(x => x.at("content"))
+                .join()
             )
             #colbreak()
           ]
@@ -348,7 +370,10 @@
         #if down_clues_array.len() > down_split_index [
           ==== Down (Continued)
           #(
-            down_clues_array.slice(down_split_index).join()
+            down_clues_array
+              .slice(down_split_index)
+              .map(x => x.at("content"))
+              .join()
           )
         ]
       ]

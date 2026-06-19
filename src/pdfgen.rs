@@ -54,6 +54,7 @@ pub fn compile_pdf(state: &PuzzleState) {
 }
 
 #[allow(dead_code)]
+// Append `*` to partially/fully solved clues
 fn edit_clue_text(puzzle: &mut Puzzle, clues_info: &CluesInfo) {
     puzzle.clues.across.iter_mut().for_each(|(k, v)| {
         let clue_info = clues_info.across.get(&(*k as u8)).unwrap();
