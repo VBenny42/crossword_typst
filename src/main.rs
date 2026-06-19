@@ -6,10 +6,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::{
-    pdfgen::compile_pdf,
-    types::{PdfStyle, PuzzleState},
-};
+use crate::types::{PdfStyle, PuzzleState};
 
 mod pdfgen;
 mod puzzle;
@@ -71,7 +68,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if args.write_to_json_only {
         return Ok(());
     }
-    compile_pdf(&state);
+
     state.solve_puzzle()?;
 
     Ok(())

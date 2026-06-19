@@ -1,7 +1,7 @@
 use puz_parse::{parse_file, Puzzle};
 use std::{collections::HashMap, error::Error, fs::File, path::PathBuf};
 
-use crate::{input, pdfgen::compile_pdf, types};
+use crate::{input, pdfgen::PdfCompiler, types};
 use types::{ClueInfo, CluesInfo, Direction, PuzzleState};
 
 pub const BLANK_CELL: char = '-';
@@ -294,6 +294,9 @@ impl PuzzleState {
     pub fn solve_puzzle(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let mut should_recompile = false;
 
+        let compiler = PdfCompiler::new(self.pdf_style);
+        compiler.compile_pdf(self);
+
         loop {
             if self.puzzle.grid.blank == self.puzzle.grid.solution {
                 println!("Congratulations! You've solved the puzzle!");
@@ -385,7 +388,7 @@ impl PuzzleState {
             if should_recompile {
                 let start = std::time::Instant::now();
 
-                compile_pdf(self);
+                compiler.compile_pdf(self);
                 write_puzzle_to_json(&self.json_output_path, &self.puzzle)?;
 
                 println!("Took: {:?}", start.elapsed());
