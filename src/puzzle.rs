@@ -47,7 +47,7 @@ impl PuzzleState {
         } else {
             eprintln!("JSON file does not exist. Creating a new one...");
             write_puzzle_to_json(&args.json_output_path, &puzzle)?;
-        };
+        }
 
         let read_puzzle = read_puzzle_from_json(&args.json_output_path)?;
 
@@ -162,9 +162,23 @@ impl PuzzleState {
                 .map(|row| row.chars().nth(clue_info.x).unwrap_or(BLANK_CELL))
                 .collect(),
         };
+        let solution_word: String = match direction {
+            Direction::Across => self.puzzle.grid.solution[clue_info.y]
+                [clue_info.x..(clue_info.x + clue_info.length)]
+                .to_string(),
+            Direction::Down => self
+                .puzzle
+                .grid
+                .solution
+                .iter()
+                .skip(clue_info.y)
+                .take(clue_info.length)
+                .map(|row| row.chars().nth(clue_info.x).unwrap_or(BLANK_CELL))
+                .collect(),
+        };
 
         if self.show_clue_length {
-            println!("{}. {}, {}. `{word_so_far}`", number, clue_text, direction);
+            println!("{number}. {clue_text}, {direction}. `{word_so_far}`");
         } else {
             println!(
                 "{}. {} ({}), {}. `{word_so_far}`",
@@ -181,8 +195,9 @@ impl PuzzleState {
 
         if guess.len() != clue_info.length {
             return Err(format!(
-                "Your guess must be {} characters long. Please try again.",
-                clue_info.length
+                "Your guess must be {} characters long. Please try again. Your guess length: {}",
+                clue_info.length,
+                guess.len()
             )
             .into());
         }
@@ -191,6 +206,7 @@ impl PuzzleState {
             .chars()
             .zip(word_so_far.chars())
             .any(|(a, b)| a != b && b != BLANK_CELL)
+            && guess != solution_word
         {
             println!(
                 "At least one of the letters in your guess differs from the solved clue so far."
@@ -291,6 +307,55 @@ impl PuzzleState {
         Ok(())
     }
 
+    fn reveal_clue_answer(
+        &mut self,
+        number: u8,
+        direction: Direction,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let clue_info = match direction {
+            Direction::Across => self
+                .clues_info
+                .across
+                .get(&number)
+                .ok_or("Clue number not found in across clues")?,
+            Direction::Down => self
+                .clues_info
+                .down
+                .get(&number)
+                .ok_or("Clue number not found in down clues")?,
+        };
+
+        self.puzzle.grid.blank = self
+            .puzzle
+            .grid
+            .blank
+            .iter()
+            .enumerate()
+            .map(|(y, row)| {
+                row.chars()
+                    .enumerate()
+                    .map(|(x, c)| {
+                        if (direction == Direction::Across
+                            && y == clue_info.y
+                            && x >= clue_info.x
+                            && x < (clue_info.x + clue_info.length))
+                            || (direction == Direction::Down
+                                && x == clue_info.x
+                                && y >= clue_info.y
+                                && y < (clue_info.y + clue_info.length))
+                        {
+                            self.puzzle.grid.solution[y].chars().nth(x).unwrap()
+                        } else {
+                            c
+                        }
+                    })
+                    .collect()
+            })
+            .collect();
+
+        Ok(())
+    }
+
     pub fn solve_puzzle(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let mut should_recompile = false;
 
@@ -311,7 +376,8 @@ impl PuzzleState {
 4. Print the current state of the puzzle
 5. Remove a clue's answer from the puzzle
 6. Remove all wrong answers from the puzzle
-7. Exit"
+7. Reveal a clue in the puzzle
+8. Exit"
             );
 
             let choice: Result<String, _> = input();
@@ -348,7 +414,7 @@ impl PuzzleState {
                         "Invalid input, please enter 1 or 2:"
                     );
 
-                    self.remove_clue_answer(clue_number, direction)?;
+                    try_or_continue!(self.remove_clue_answer(clue_number, direction), "Error:");
 
                     should_recompile = true;
                 }
@@ -362,6 +428,22 @@ impl PuzzleState {
                     }
                 }
                 Ok("7") => {
+                    println!("You chose to reveal a clue's answer. Please enter the clue number:");
+                    let clue_number: u8 = try_or_continue!(input(), "Invalid digit:");
+
+                    println!("1. Reveal an across clue");
+                    println!("2. Reveal a down clue");
+
+                    let direction = try_or_continue!(
+                        input::<Direction>(),
+                        "Invalid input, please enter 1 or 2:"
+                    );
+
+                    try_or_continue!(self.reveal_clue_answer(clue_number, direction), "Error:");
+
+                    should_recompile = true;
+                }
+                Ok("8") => {
                     println!("Exiting...");
                     write_puzzle_to_json(&self.json_output_path, &self.puzzle)?;
                     break;

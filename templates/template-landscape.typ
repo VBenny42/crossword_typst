@@ -223,7 +223,7 @@
 
     let across_split_index = across_clues_array.len()
     // Assuming a minimum of 15 items can always fit
-    let start = calc.min(20, across_clues_array.len())
+    let start = calc.min(19, across_clues_array.len())
     // across_split_index = start
 
     for i in range(start, across_clues_array.len() + 1) {
@@ -239,7 +239,7 @@
     }
 
     let down_split_index = down_clues_array.len()
-    start = calc.min(20, down_clues_array.len())
+    start = calc.min(19, down_clues_array.len())
     // down_split_index = start
 
     for i in range(start, down_clues_array.len() + 1) {

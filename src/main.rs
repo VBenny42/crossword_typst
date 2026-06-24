@@ -13,13 +13,14 @@ mod puzzle;
 mod types;
 
 fn default_json_path() -> PathBuf {
-    ProjectDirs::from("com", "VBenny42", "crossword_typst")
-        .map(|dirs| {
+    ProjectDirs::from("com", "VBenny42", "crossword_typst").map_or(
+        PathBuf::from("output.json"),
+        |dirs| {
             let data_dir = dirs.data_dir().to_path_buf();
             fs::create_dir_all(&data_dir).ok();
             data_dir.join("output.json")
-        })
-        .unwrap_or_else(|| PathBuf::from("output.json"))
+        },
+    )
 }
 
 fn input<T: FromStr>() -> Result<T, <T as FromStr>::Err> {
