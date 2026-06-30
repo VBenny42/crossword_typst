@@ -122,8 +122,6 @@
 
       while x <= puzzle.info.width {
         let next_cell = puzzle_grid.at(y).clusters().at(x)
-        // let solution_cell = puzzle.grid.solution.at(y).clusters().at(x)
-        // if next_cell == BLANK_CELL or next_cell != solution_cell {
         if next_cell == BLANK_CELL {
           break
         }
@@ -164,8 +162,6 @@
 
       while y <= puzzle.info.height {
         let next_cell = puzzle_grid.at(y).clusters().at(x)
-        // let solution_cell = puzzle.grid.solution.at(y).clusters().at(x)
-        // if next_cell == BLANK_CELL or next_cell != solution_cell {
         if next_cell == BLANK_CELL {
           break
         }
@@ -214,7 +210,6 @@
               fill: if cell == BLACK_CELL { foreground_color } else {
                 background_color
               },
-              clip: true,
               stroke: (paint: foreground_color, thickness: 1pt),
 
               {

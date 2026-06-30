@@ -300,7 +300,6 @@
                     fill: if cell == BLACK_CELL { foreground_color } else {
                       background_color
                     },
-                    clip: true,
                     stroke: (paint: foreground_color, thickness: 1pt),
 
                     {
