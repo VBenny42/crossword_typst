@@ -70,7 +70,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    state.solve_puzzle()?;
-
-    Ok(())
+    state.solve_puzzle()
 }

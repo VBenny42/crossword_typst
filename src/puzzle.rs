@@ -186,7 +186,11 @@ impl PuzzleState {
             );
         }
 
-        let guess: String = if let Some(pass) = passed_guess {
+        if word_so_far == solution_word {
+            return Err("You already solved this clue!".into());
+        }
+
+        let mut guess: String = if let Some(pass) = passed_guess {
             pass.to_uppercase()
         } else {
             println!("Input your guess:");
@@ -492,13 +496,9 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
 
     let mut clue_number = 1;
 
-    // TODO: Figure out a way to specify y and x as usize
-    for y in 0..puzzle.info.height {
-        for x in 0..puzzle.info.width {
-            let cell = puzzle.grid.blank[y as usize]
-                .chars()
-                .nth(x as usize)
-                .unwrap_or(BLANK_CELL);
+    for y in 0..puzzle.info.height as usize {
+        for x in 0..puzzle.info.width as usize {
+            let cell = puzzle.grid.blank[y].chars().nth(x).unwrap_or(BLANK_CELL);
 
             if cell == BLACK_CELL {
                 continue; // Skip black squares
@@ -507,24 +507,24 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
 
             // Check for across clue
             if (x == 0
-                || puzzle.grid.blank[y as usize]
+                || puzzle.grid.blank[y]
                     .chars()
-                    .nth((x - 1) as usize)
+                    .nth(x - 1)
                     .unwrap_or(BLANK_CELL)
                     == BLACK_CELL)
-                && (x + 1 < puzzle.info.width
-                    && puzzle.grid.blank[y as usize]
+                && (x + 1 < puzzle.info.width as usize
+                    && puzzle.grid.blank[y]
                         .chars()
-                        .nth((x + 1) as usize)
+                        .nth(x + 1)
                         .unwrap_or(BLANK_CELL)
                         != BLACK_CELL)
             {
-                let clue_length = (0..puzzle.info.width)
+                let clue_length = (0..puzzle.info.width as usize)
                     .take_while(|i| {
-                        x + *i < puzzle.info.width
-                            && puzzle.grid.blank[y as usize]
+                        x + *i < (puzzle.info.width as usize)
+                            && puzzle.grid.blank[y]
                                 .chars()
-                                .nth((x + *i) as usize)
+                                .nth(x + *i)
                                 .unwrap_or(BLANK_CELL)
                                 != BLACK_CELL
                     })
@@ -536,31 +536,31 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                     clue_number,
                     ClueInfo {
                         length: clue_length,
-                        x: x as usize,
-                        y: y as usize,
+                        x,
+                        y,
                     },
                 );
             }
             // Check for down clue
             if (y == 0
-                || puzzle.grid.blank[(y - 1) as usize]
+                || puzzle.grid.blank[y - 1]
                     .chars()
-                    .nth(x as usize)
+                    .nth(x)
                     .unwrap_or(BLANK_CELL)
                     == BLACK_CELL)
-                && (y + 1 < puzzle.info.height
-                    && puzzle.grid.blank[(y + 1) as usize]
+                && (y + 1 < puzzle.info.height as usize
+                    && puzzle.grid.blank[y + 1]
                         .chars()
-                        .nth(x as usize)
+                        .nth(x)
                         .unwrap_or(BLANK_CELL)
                         != BLACK_CELL)
             {
-                let clue_length = (0..puzzle.info.height)
+                let clue_length = (0..puzzle.info.height as usize)
                     .take_while(|i| {
-                        y + *i < puzzle.info.height
-                            && puzzle.grid.blank[(y + *i) as usize]
+                        y + *i < puzzle.info.height as usize
+                            && puzzle.grid.blank[y + *i]
                                 .chars()
-                                .nth(x as usize)
+                                .nth(x)
                                 .unwrap_or(BLANK_CELL)
                                 != BLACK_CELL
                     })
@@ -572,8 +572,8 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                     clue_number,
                     ClueInfo {
                         length: clue_length,
-                        x: x as usize,
-                        y: y as usize,
+                        x,
+                        y,
                     },
                 );
             }
