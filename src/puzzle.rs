@@ -74,12 +74,7 @@ impl PuzzleState {
         Ok(PuzzleState {
             puzzle,
             clues_info,
-            puzzle_path: args.puzzle_file_path.clone(),
-            json_output_path: args.json_output_path.clone(),
-            nord_colors: args.nord_colors,
-            hide_completed_clues: args.hide_completed_clues,
-            show_clue_length: args.show_clue_length,
-            pdf_style: args.pdf_style,
+            args: args.clone(),
         })
     }
 
@@ -177,7 +172,7 @@ impl PuzzleState {
                 .collect(),
         };
 
-        if self.show_clue_length {
+        if self.args.show_clue_length {
             println!("{number}. {clue_text}, {direction}. `{word_so_far}`");
         } else {
             println!(
@@ -227,6 +222,14 @@ impl PuzzleState {
                     return Ok(());
                 }
             }
+        }
+
+        if self.args.show_correct_letters_only {
+            guess = guess
+                .chars()
+                .zip(solution_word.chars())
+                .map(|(a, b)| if a == b { a } else { BLANK_CELL })
+                .collect();
         }
 
         self.puzzle.grid.blank = self
@@ -363,7 +366,7 @@ impl PuzzleState {
     pub fn solve_puzzle(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let mut should_recompile = false;
 
-        let compiler = PdfCompiler::new(self.pdf_style);
+        let compiler = PdfCompiler::new(self.args.pdf_style);
         compiler.compile_pdf(self);
 
         loop {
@@ -398,7 +401,7 @@ impl PuzzleState {
                 }
                 Ok("3") => {
                     println!("Overwriting JSON file with blank puzzle data...");
-                    let blank_puzzle = initialize_puzzle(&self.puzzle_path)?;
+                    let blank_puzzle = initialize_puzzle(&self.args.puzzle_file_path)?;
                     should_recompile = true;
                     self.puzzle.grid.blank.clone_from(&blank_puzzle.grid.blank);
                 }
@@ -449,7 +452,7 @@ impl PuzzleState {
                 }
                 Ok("8") => {
                     println!("Exiting...");
-                    write_puzzle_to_json(&self.json_output_path, &self.puzzle)?;
+                    write_puzzle_to_json(&self.args.json_output_path, &self.puzzle)?;
                     break;
                 }
                 Ok(s) if s.starts_with('1') || s.starts_with('2') => {
@@ -475,7 +478,7 @@ impl PuzzleState {
                 let start = std::time::Instant::now();
 
                 compiler.compile_pdf(self);
-                write_puzzle_to_json(&self.json_output_path, &self.puzzle)?;
+                write_puzzle_to_json(&self.args.json_output_path, &self.puzzle)?;
 
                 println!("Took: {:?}", start.elapsed());
             }

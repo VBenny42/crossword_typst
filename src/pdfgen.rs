@@ -40,10 +40,10 @@ impl PdfCompiler {
                 "crossword_json".into(),
                 get_puz_json(&state.puzzle).unwrap().into_value(),
             ),
-            ("nord_colors".into(), state.nord_colors.into_value()),
+            ("nord_colors".into(), state.args.nord_colors.into_value()),
             (
                 "hide_completed_clues".into(),
-                state.hide_completed_clues.into_value(),
+                state.args.hide_completed_clues.into_value(),
             ),
         ]
         .into_iter()

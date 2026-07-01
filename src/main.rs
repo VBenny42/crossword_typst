@@ -33,7 +33,7 @@ fn input<T: FromStr>() -> Result<T, <T as FromStr>::Err> {
     input.trim().parse()
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 pub struct Args {
     #[arg(short, long, default_value_os_t = default_json_path(), help="Path to where json should be saved")]
     json_output_path: PathBuf,
@@ -50,8 +50,11 @@ pub struct Args {
     #[arg(long, action = SetTrue, help = "Hide completed clues in the PDF")]
     hide_completed_clues: bool,
 
-    #[arg(short, long, action = SetTrue, help = "Show word length for a clue in the PDF")]
+    #[arg(long, action = SetTrue, help = "Show word length for a clue in the PDF")]
     show_clue_length: bool,
+
+    #[arg(long, action = SetTrue, help = "Only show correct letters from guessed clues")]
+    show_correct_letters_only: bool,
 
     #[arg(
         long,

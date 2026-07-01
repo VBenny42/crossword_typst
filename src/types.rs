@@ -1,7 +1,9 @@
 use core::fmt;
-use std::{collections::HashMap, path::PathBuf, str::FromStr};
+use std::{collections::HashMap, str::FromStr};
 
 use puz_parse::Puzzle;
+
+use crate::Args;
 
 #[derive(Debug)]
 pub struct ClueInfo {
@@ -20,13 +22,8 @@ pub struct CluesInfo {
 pub struct PuzzleState {
     pub puzzle: Puzzle,
     pub clues_info: CluesInfo,
-    pub puzzle_path: PathBuf,
-    pub json_output_path: PathBuf,
 
-    pub nord_colors: bool,
-    pub hide_completed_clues: bool,
-    pub show_clue_length: bool,
-    pub pdf_style: PdfStyle,
+    pub args: Args,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
