@@ -143,34 +143,7 @@ impl PuzzleState {
             .get(&u16::from(number))
             .map_or("Unknown clue", |s| s.as_str());
 
-        let word_so_far: String = match direction {
-            Direction::Across => self.puzzle.grid.blank[clue_info.y]
-                [clue_info.x..(clue_info.x + clue_info.length)]
-                .to_string(),
-            Direction::Down => self
-                .puzzle
-                .grid
-                .blank
-                .iter()
-                .skip(clue_info.y)
-                .take(clue_info.length)
-                .map(|row| row.chars().nth(clue_info.x).unwrap_or(BLANK_CELL))
-                .collect(),
-        };
-        let solution_word: String = match direction {
-            Direction::Across => self.puzzle.grid.solution[clue_info.y]
-                [clue_info.x..(clue_info.x + clue_info.length)]
-                .to_string(),
-            Direction::Down => self
-                .puzzle
-                .grid
-                .solution
-                .iter()
-                .skip(clue_info.y)
-                .take(clue_info.length)
-                .map(|row| row.chars().nth(clue_info.x).unwrap_or(BLANK_CELL))
-                .collect(),
-        };
+        let (word_so_far, solution_word) = self.get_clue_so_far(number, direction);
 
         if self.args.show_clue_length {
             println!("{number}. {clue_text}, {direction}. `{word_so_far}`");
@@ -314,22 +287,100 @@ impl PuzzleState {
         Ok(())
     }
 
-    fn reveal_clue_answer(
-        &mut self,
-        number: u8,
-        direction: Direction,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    fn get_clue_so_far(&self, number: u8, direction: Direction) -> (String, String) {
         let clue_info = match direction {
             Direction::Across => self
                 .clues_info
                 .across
                 .get(&number)
-                .ok_or("Clue number not found in across clues")?,
+                .ok_or("Clue number not found in across clues")
+                .unwrap(),
             Direction::Down => self
                 .clues_info
                 .down
                 .get(&number)
-                .ok_or("Clue number not found in down clues")?,
+                .ok_or("Clue number not found in down clues")
+                .unwrap(),
+        };
+
+        let word_so_far: String = match direction {
+            Direction::Across => self.puzzle.grid.blank[clue_info.y]
+                [clue_info.x..(clue_info.x + clue_info.length)]
+                .to_string(),
+            Direction::Down => self
+                .puzzle
+                .grid
+                .blank
+                .iter()
+                .skip(clue_info.y)
+                .take(clue_info.length)
+                .map(|row| row.chars().nth(clue_info.x).unwrap_or(BLANK_CELL))
+                .collect(),
+        };
+        let solution_word: String = match direction {
+            Direction::Across => self.puzzle.grid.solution[clue_info.y]
+                [clue_info.x..(clue_info.x + clue_info.length)]
+                .to_string(),
+            Direction::Down => self
+                .puzzle
+                .grid
+                .solution
+                .iter()
+                .skip(clue_info.y)
+                .take(clue_info.length)
+                .map(|row| row.chars().nth(clue_info.x).unwrap_or(BLANK_CELL))
+                .collect(),
+        };
+
+        (word_so_far, solution_word)
+    }
+
+    fn reveal_clue_answer(&mut self, number: u8) -> Result<(), Box<dyn std::error::Error>> {
+        let across_clue = self.clues_info.across.get(&number);
+        let down_clue = self.clues_info.down.get(&number);
+
+        // If a clue number exists for both across and down, determine which one to reveal based on the current state of the puzzle
+        // If across clue is already solved, reveal down clue, and vice versa. If both are unsolved, ask the user which one to reveal.
+        // If both are already solved, return an error.
+        // Otherwise, reveal the clue that exists.
+        let (direction, clue_info) = match (across_clue, down_clue) {
+            (Some(clue), None) => (Direction::Across, clue),
+            (None, Some(clue)) => (Direction::Down, clue),
+            (Some(a_clue), Some(d_clue)) => {
+                let (a_word_so_far, a_solution_word) =
+                    self.get_clue_so_far(number, Direction::Across);
+                let (d_word_so_far, d_solution_word) =
+                    self.get_clue_so_far(number, Direction::Down);
+
+                match (
+                    a_word_so_far == a_solution_word,
+                    d_word_so_far == d_solution_word,
+                ) {
+                    (true, false) => (Direction::Down, d_clue),
+                    (false, true) => (Direction::Across, a_clue),
+                    (true, true) => {
+                        return Err("Both across and down clues are already solved.".into())
+                    }
+                    (false, false) => {
+                        println!(
+                            "Clue number {} exists in both across and down clues. Please choose which one to reveal:",
+                            number,
+                        );
+                        println!("1. Across clue");
+                        println!("2. Down clue");
+
+                        let choice: Direction = input()?;
+
+                        match choice {
+                            Direction::Across => (Direction::Across, a_clue),
+                            Direction::Down => (Direction::Down, d_clue),
+                        }
+                    }
+                }
+            }
+            (None, None) => {
+                return Err("Clue number not found in either across or down clues".into());
+            }
         };
 
         self.puzzle.grid.blank = self
@@ -438,15 +489,10 @@ impl PuzzleState {
                     println!("You chose to reveal a clue's answer. Please enter the clue number:");
                     let clue_number: u8 = try_or_continue!(input(), "Invalid digit:");
 
-                    println!("1. Reveal an across clue");
-                    println!("2. Reveal a down clue");
-
-                    let direction = try_or_continue!(
-                        input::<Direction>(),
-                        "Invalid input, please enter 1 or 2:"
+                    try_or_continue!(
+                        self.reveal_clue_answer(clue_number),
+                        "Error revealing clue:"
                     );
-
-                    try_or_continue!(self.reveal_clue_answer(clue_number, direction), "Error:");
 
                     should_recompile = true;
                 }
@@ -466,6 +512,19 @@ impl PuzzleState {
                     try_or_continue!(
                         self.solve_clue(clue_number, direction, split.next()),
                         "Error solving clue:"
+                    );
+
+                    should_recompile = true;
+                }
+                Ok(s) if s.starts_with('7') => {
+                    let mut split = s[1..].split_whitespace();
+
+                    let clue_number: u8 =
+                        try_or_continue!(split.next().unwrap().parse(), "Invalid clue number:");
+
+                    try_or_continue!(
+                        self.reveal_clue_answer(clue_number),
+                        "Error revealing clue:"
                     );
 
                     should_recompile = true;
