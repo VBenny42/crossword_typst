@@ -62,11 +62,11 @@ impl PuzzleState {
 
         if args.show_clue_length {
             puzzle.clues.across.iter_mut().for_each(|(k, v)| {
-                let clue_info = clues_info.across.get(&(*k as u8)).unwrap();
+                let clue_info = clues_info.across.get(&(u8::try_from(*k).unwrap())).unwrap();
                 *v = format!("{v} ({})", clue_info.length);
             });
             puzzle.clues.down.iter_mut().for_each(|(k, v)| {
-                let clue_info = clues_info.down.get(&(*k as u8)).unwrap();
+                let clue_info = clues_info.down.get(&(u8::try_from(*k).unwrap())).unwrap();
                 *v = format!("{v} ({})", clue_info.length);
             });
         }
@@ -362,10 +362,7 @@ impl PuzzleState {
                         return Err("Both across and down clues are already solved.".into())
                     }
                     (false, false) => {
-                        println!(
-                            "Clue number {} exists in both across and down clues. Please choose which one to reveal:",
-                            number,
-                        );
+                        println!("Clue number {number} exists in both across and down clues. Please choose which one to reveal:");
                         println!("1. Across clue");
                         println!("2. Down clue");
 

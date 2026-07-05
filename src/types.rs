@@ -47,7 +47,7 @@ impl FromStr for Direction {
         match s {
             "1" => Ok(Direction::Across),
             "2" => Ok(Direction::Down),
-            _ => Err(format!("Invalid direction number: {}", s)),
+            _ => Err(format!("Invalid direction number: {s}")),
         }
     }
 }
@@ -66,7 +66,7 @@ impl FromStr for PdfStyle {
             "normal" => Ok(PdfStyle::Normal),
             "larger" => Ok(PdfStyle::Larger),
             "landscape" => Ok(PdfStyle::Landscape),
-            _ => Err(format!("Invalid PdfStyle: {}", s)),
+            _ => Err(format!("Invalid PdfStyle: {s}")),
         }
     }
 }
