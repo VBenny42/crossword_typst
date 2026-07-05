@@ -31,6 +31,52 @@
 #let BLANK_CELL = "-"
 #let BLACK_CELL = "."
 
+#let progress(
+  percent,
+  height: 100%,
+  width: 100%,
+  bg: background_color,
+  fg: foreground_color,
+  stroke: 1pt + gray,
+) = {
+  box(
+    height: height,
+    width: width,
+    stroke: stroke,
+    fill: bg,
+    {
+      if percent > 0 {
+        box(height: 100%, width: width * percent, fill: fg)
+      }
+
+      let color = if percent < 0.5 { fg } else { bg }
+      let inverse_color = if percent < 0.5 { bg } else { fg }
+
+      if percent >= 0.44 and percent <= 0.56 {
+        place(
+          center + horizon,
+          text(
+            fill: inverse_color,
+            stroke: 2pt + inverse_color,
+            size: 9pt,
+            weight: "bold",
+            str(int(percent * 100)) + "%",
+          ),
+        )
+      }
+      place(
+        center + horizon,
+        text(
+          fill: color,
+          size: 9pt,
+          weight: "bold",
+          str(int(percent * 100)) + "%",
+        ),
+      )
+    },
+  )
+}
+
 #let crossword(puzzle) = {
   let puzzle_grid = puzzle.grid.at("blank")
 
@@ -48,10 +94,16 @@
   let number_to_coord = (:)
   let coord_to_number = (:)
   let n = 1
+
+  let filled_cells = 0
+  let all_cells = 0
+
   for y in range(puzzle.info.height) {
     for x in range(puzzle.info.width) {
       let cell = puzzle_grid.at(y).clusters().at(x)
       if cell == BLACK_CELL { continue }
+
+      all_cells += 1
 
       let solution_cell = puzzle.grid.solution.at(y).clusters().at(x)
 
@@ -61,6 +113,12 @@
 
       if cell != BLANK_CELL and cell != solution_cell {
         wrong_letter_exists = true
+      }
+      // Technically I don't need to check if cell is a solution cell,
+      // as the wrong letter text would show up in the header instead of the progress bar,
+      // but I want to be explicit about it
+      if cell == solution_cell {
+        filled_cells += 1
       }
 
       let starts-across = (
@@ -87,6 +145,10 @@
 
   let is_finished = not space_exists and not wrong_letter_exists
 
+  let percent_complete = if all_cells > 0 {
+    (filled_cells / all_cells) * 100
+  } else { 0 }
+
   set page(
     header: if is_finished {
       [#puzzle.info.title #h(1fr) _Finished_]
@@ -96,6 +158,13 @@
           weight: "bold",
           "WRONG GUESS EXISTS",
         )]
+    } else if percent_complete > 0 {
+      set text(size: 14pt)
+      grid(
+        columns: (1fr, auto),
+        puzzle.info.title,
+        progress(percent_complete / 100, width: 11em, height: 0.7em),
+      )
     } else {
       puzzle.info.title
     },
