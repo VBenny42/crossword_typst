@@ -39,7 +39,7 @@ pub struct Args {
     json_output_path: PathBuf,
 
     #[arg(short, long, help = "Path to .puz file to be read")]
-    puzzle_file_path: std::path::PathBuf,
+    puzzle_file_path: PathBuf,
 
     #[arg(short, long, action = SetTrue, help = "Just write to json file and exit")]
     write_to_json_only: bool,

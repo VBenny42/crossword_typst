@@ -57,7 +57,7 @@
           center + horizon,
           text(
             fill: inverse_color,
-            stroke: 2pt + inverse_color,
+            stroke: 1pt + inverse_color,
             size: 9pt,
             weight: "bold",
             str(int(percent * 100)) + "%",
@@ -159,7 +159,6 @@
           "WRONG GUESS EXISTS",
         )]
     } else if percent_complete > 0 {
-      set text(size: 14pt)
       grid(
         columns: (1fr, auto),
         puzzle.info.title,

@@ -34,7 +34,7 @@
 #let crossword(puzzle) = {
   let puzzle_grid = puzzle.grid.at("blank")
 
-  // Allotted space should be 3/4 of usable page width
+  // Allotted space should be all of usable page width
   let puzzle_width = (8.5in - 0.5in) * (4 / 4)
   let box_unit = puzzle_width / puzzle.info.width
 
