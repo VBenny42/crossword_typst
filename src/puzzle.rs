@@ -21,15 +21,23 @@ macro_rules! try_or_continue {
 
 macro_rules! solve_clue_input {
     ($self:expr, $direction:expr) => {
-        println!("Please enter the clue number:");
-        let clue_number: u8 = match input() {
-            Ok(num) => num,
-            Err(e) => {
-                println!("Invalid input, please enter a number. Error: {e}");
-                continue;
-            }
-        };
-        try_or_continue!($self.solve_clue(clue_number, $direction, None), "Solve:");
+        println!("Please enter the clue number [+ guess]:");
+
+        let input_string: String = try_or_continue!(input(), "Invalid input. Error:");
+
+        let mut split = input_string.split_whitespace();
+
+        let clue_number = try_or_continue!(
+            split
+                .next()
+                .expect("Expected at least one word")
+                .parse::<u8>(),
+            "Invalid input, please enter a number. Error:"
+        );
+        try_or_continue!(
+            $self.solve_clue(clue_number, $direction, split.next()),
+            "Solve:"
+        );
     };
 }
 
@@ -213,7 +221,7 @@ impl PuzzleState {
         }
 
         let mut guess: String = if let Some(pass) = passed_guess {
-            pass.to_uppercase()
+            pass.trim().to_uppercase()
         } else {
             println!("Input your guess:");
             input::<String>()?.to_uppercase()
@@ -259,7 +267,7 @@ impl PuzzleState {
                 .collect();
 
             if guess == word_so_far {
-                return Err("No correct letters in your guess.".into());
+                return Err("Your guess did not add any new correct letters.".into());
             }
         }
 
@@ -448,11 +456,20 @@ impl PuzzleState {
     }
 
     fn check_for_clue_number(&self, input: &str) -> Option<u8> {
-        let first_word = input.split_whitespace().next()?;
-        let second_word = input.split_whitespace().nth(1);
+        let count = input.chars().take_while(|c| c.is_ascii_digit()).count();
+
+        if count == 0 {
+            return None;
+        }
+
+        let first_word = &input[0..count];
+        let second_word = input[count..].trim();
 
         // Means that the user is trying to reveal a clue by cluenumber, not solve a clue
-        if first_word == "7" && second_word.is_some_and(|s| s.chars().all(|c| c.is_ascii_digit())) {
+        if first_word == "7"
+            && !second_word.is_empty()
+            && second_word.chars().all(|c| c.is_ascii_digit())
+        {
             return None;
         }
 
@@ -490,29 +507,29 @@ impl PuzzleState {
 8. Exit"
             );
 
-            let choice: Result<String, _> = input();
-            match choice.as_deref() {
-                Ok("1") => {
+            let choice: String = input()?;
+            match choice.as_str() {
+                "1" => {
                     println!("You chose to solve an across clue.");
                     solve_clue_input!(self, Direction::Across);
                     should_recompile = true;
                 }
-                Ok("2") => {
+                "2" => {
                     println!("You chose to solve a down clue.");
                     solve_clue_input!(self, Direction::Down);
                     should_recompile = true;
                 }
-                Ok("3") => {
+                "3" => {
                     println!("Overwriting JSON file with blank puzzle data...");
                     let blank_puzzle = initialize_puzzle(&self.args.puzzle_file_path)?;
                     should_recompile = true;
                     self.puzzle.grid.blank.clone_from(&blank_puzzle.grid.blank);
                 }
-                Ok("4") => {
+                "4" => {
                     println!("Current state of the puzzle:");
                     self.print_puzzle();
                 }
-                Ok("5") => {
+                "5" => {
                     println!("You chose to remove a clue's answer. Please enter the clue number:");
                     let clue_number: u8 = try_or_continue!(input(), "Invalid digit:");
 
@@ -520,7 +537,7 @@ impl PuzzleState {
 
                     should_recompile = true;
                 }
-                Ok("6") => {
+                "6" => {
                     println!("Removing all wrong answers from the puzzle...");
                     if self.remove_wrong_answers() {
                         println!("No wrong answers to remove!");
@@ -529,7 +546,7 @@ impl PuzzleState {
                         should_recompile = true;
                     }
                 }
-                Ok("7") => {
+                "7" => {
                     println!("You chose to reveal a clue's answer. Please enter the clue number:");
                     let clue_number: u8 = try_or_continue!(input(), "Invalid digit:");
 
@@ -540,14 +557,35 @@ impl PuzzleState {
 
                     should_recompile = true;
                 }
-                Ok("8") => {
+                "8" => {
                     println!("Exiting...");
                     write_puzzle_to_json(&self.args.json_output_path, &self.puzzle)?;
                     break;
                 }
-                Ok(s) if self.check_for_clue_number(s).is_some() => {
+                s if self.check_for_clue_number(s).is_some() => {
                     let clue_number = self.check_for_clue_number(s).unwrap();
-                    let guess = s.split_whitespace().nth(1);
+
+                    let guess = match s.chars().any(|c| c.is_ascii_whitespace()) {
+                        true => s.split_whitespace().nth(1),
+                        // Supporting user typing in <CLUENUMBER><GUESS>
+                        // i.e. no space(s) between
+                        // Since check_for_clue_number returned true,
+                        // there must be a valid clue number
+                        false => {
+                            let digits = if clue_number < 10 {
+                                1
+                            } else if clue_number < 100 {
+                                2
+                            } else {
+                                3
+                            };
+                            match digits == s.len() {
+                                // only number was sent
+                                true => None,
+                                false => Some(&s[digits..]),
+                            }
+                        }
+                    };
 
                     let (direction, _) = try_or_continue!(
                         self.pick_direction_clue_info(clue_number, guess),
@@ -558,22 +596,7 @@ impl PuzzleState {
 
                     should_recompile = true;
                 }
-                // Ok(s) if s.starts_with('1') || s.starts_with('2') => {
-                //     let direction = try_or_continue!(s[0..1].parse(), "Invalid input:");
-                //
-                //     let mut split = s[1..].split_whitespace();
-                //
-                //     let clue_number: u8 =
-                //         try_or_continue!(split.next().unwrap().parse(), "Invalid clue number:");
-                //
-                //     try_or_continue!(
-                //         self.solve_clue(clue_number, direction, split.next()),
-                //         "Solve:"
-                //     );
-                //
-                //     should_recompile = true;
-                // }
-                Ok(s) if s.starts_with('7') => {
+                s if s.starts_with('7') => {
                     let mut split = s[1..].split_whitespace();
 
                     let clue_number: u8 =
@@ -586,8 +609,7 @@ impl PuzzleState {
 
                     should_recompile = true;
                 }
-                Ok(s) => println!("Invalid choice, please try again. {s}"),
-                Err(e) => println!("Invalid input, please enter a number. Error: {e}"),
+                s => println!("Invalid choice, please try again. {s}"),
             }
 
             if should_recompile {
