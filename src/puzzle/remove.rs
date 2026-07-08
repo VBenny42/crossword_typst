@@ -1,0 +1,140 @@
+use std::error::Error;
+
+use crate::puzzle::input;
+use crate::types::{Direction, PuzzleState, BLANK_CELL};
+
+impl PuzzleState {
+    pub(crate) fn remove_wrong_answers(&mut self) -> bool {
+        let old_blank = self.puzzle.grid.blank.clone();
+
+        self.puzzle.grid.blank = self
+            .puzzle
+            .grid
+            .blank
+            .iter()
+            .enumerate()
+            .map(|(y, row)| {
+                row.chars()
+                    .enumerate()
+                    .map(|(x, c)| {
+                        if self.puzzle.grid.solution[y]
+                            .chars()
+                            .nth(x)
+                            .unwrap_or(BLANK_CELL)
+                            == c
+                        {
+                            c
+                        } else {
+                            BLANK_CELL
+                        }
+                    })
+                    .collect()
+            })
+            .collect();
+
+        old_blank == self.puzzle.grid.blank
+    }
+
+    pub(crate) fn remove_clue_answer(&mut self, number: u8) -> Result<(), Box<dyn Error>> {
+        let (direction, clue_info) = match (
+            self.clues_info.across.get(&number),
+            self.clues_info.down.get(&number),
+        ) {
+            (Some(clue), None) => (Direction::Across, clue),
+            (None, Some(clue)) => (Direction::Down, clue),
+            (Some(a_clue), Some(d_clue)) => {
+                let (a_word_so_far, _) = self.get_clue_so_far(number, Direction::Across);
+                let (d_word_so_far, _) = self.get_clue_so_far(number, Direction::Down);
+
+                // Only first of across filled in, then remove whole down, and vice versa.
+                // If both have partial fills, ask the user which one to remove.
+                match (
+                    a_word_so_far[1..].chars().all(|c| c == BLANK_CELL),
+                    d_word_so_far[1..].chars().all(|c| c == BLANK_CELL),
+                ) {
+                    (true, false) => (Direction::Down, d_clue),
+                    (false, true) => (Direction::Across, a_clue),
+                    _ => {
+                        println!("Clue number {number} exists in both across and down clues. Please choose which one to remove:");
+                        println!("1. Across clue");
+                        println!("2. Down clue");
+
+                        let choice: Direction = input()?;
+
+                        match choice {
+                            Direction::Across => (Direction::Across, a_clue),
+                            Direction::Down => (Direction::Down, d_clue),
+                        }
+                    }
+                }
+            }
+            (None, None) => {
+                return Err("Clue number not found in either across or down clues".into());
+            }
+        };
+
+        self.puzzle.grid.blank = self
+            .puzzle
+            .grid
+            .blank
+            .iter()
+            .enumerate()
+            .map(|(y, row)| {
+                row.chars()
+                    .enumerate()
+                    .map(|(x, c)| {
+                        if (direction == Direction::Across
+                            && y == clue_info.y
+                            && x >= clue_info.x
+                            && x < (clue_info.x + clue_info.length))
+                            || (direction == Direction::Down
+                                && x == clue_info.x
+                                && y >= clue_info.y
+                                && y < (clue_info.y + clue_info.length))
+                        {
+                            BLANK_CELL
+                        } else {
+                            c
+                        }
+                    })
+                    .collect()
+            })
+            .collect();
+
+        Ok(())
+    }
+
+    pub(crate) fn reveal_clue_answer(&mut self, number: u8) -> Result<(), Box<dyn Error>> {
+        let (direction, clue_info) = self.pick_direction_clue_info(number, None)?;
+
+        self.puzzle.grid.blank = self
+            .puzzle
+            .grid
+            .blank
+            .iter()
+            .enumerate()
+            .map(|(y, row)| {
+                row.chars()
+                    .enumerate()
+                    .map(|(x, c)| {
+                        if (direction == Direction::Across
+                            && y == clue_info.y
+                            && x >= clue_info.x
+                            && x < (clue_info.x + clue_info.length))
+                            || (direction == Direction::Down
+                                && x == clue_info.x
+                                && y >= clue_info.y
+                                && y < (clue_info.y + clue_info.length))
+                        {
+                            self.puzzle.grid.solution[y].chars().nth(x).unwrap()
+                        } else {
+                            c
+                        }
+                    })
+                    .collect()
+            })
+            .collect();
+
+        Ok(())
+    }
+}

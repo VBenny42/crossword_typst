@@ -3,7 +3,6 @@ use directories::ProjectDirs;
 use std::{
     fs::{self},
     path::PathBuf,
-    str::FromStr,
 };
 
 use crate::types::{PdfStyle, PuzzleState};
@@ -21,16 +20,6 @@ fn default_json_path() -> PathBuf {
             data_dir.join("output.json")
         },
     )
-}
-
-fn input<T: FromStr>() -> Result<T, <T as FromStr>::Err> {
-    let mut input: String = String::with_capacity(64);
-
-    std::io::stdin()
-        .read_line(&mut input)
-        .expect("Input could not be read");
-
-    input.trim().parse()
 }
 
 #[derive(Parser, Debug, Clone)]

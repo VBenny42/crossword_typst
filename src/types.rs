@@ -26,6 +26,9 @@ pub struct PuzzleState {
     pub args: Args,
 }
 
+pub const BLANK_CELL: char = '-';
+pub const BLACK_CELL: char = '.';
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Direction {
     Across,

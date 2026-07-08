@@ -9,8 +9,8 @@ use typst_as_lib::{typst_kit_options::TypstKitFontOptions, TypstEngine};
 use typst_pdf::PdfOptions;
 
 use crate::{
-    puzzle::{get_puz_json, BLANK_CELL},
-    types::{CluesInfo, PdfStyle, PuzzleState},
+    puzzle::get_puz_json,
+    types::{CluesInfo, PdfStyle, PuzzleState, BLANK_CELL},
 };
 
 static TEMPLATE_NORMAL_FILE: &str = include_str!("../templates/template.typ");
