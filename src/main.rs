@@ -38,7 +38,7 @@ pub struct Args {
         short,
         long,
         value_enum,
-        default_value_t = OutputFormat::Json,
+        default_value_t = OutputFormat::Puz,
         help = "Format to write puzzle state to: json or puz"
     )]
     output_format: OutputFormat,
@@ -73,7 +73,7 @@ impl Args {
         let command = Self::command().mut_arg("output_path", |a| {
 a.hide_default_value(true).help(format!(
             "Path to where output should be saved [default: {} (extension follows --output-format)]",
-            default_output_path(OutputFormat::Json).display()
+            default_output_path(OutputFormat::Puz).display()
         ))
         });
 

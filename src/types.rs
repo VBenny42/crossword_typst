@@ -107,6 +107,10 @@ impl OutputFormat {
                 let start_position = 0x34 + write_length;
                 let blank_string = puzzle.grid.blank.concat();
 
+                assert!(
+                    blank_string.is_ascii(),
+                    "Blank grid should only have ascii chars"
+                );
                 assert_eq!(
                     blank_string.len(),
                     write_length,
