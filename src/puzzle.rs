@@ -44,7 +44,7 @@ impl PuzzleState {
                 }
             }
             OutputFormat::Puz => {
-                // Don't initialize from .puz file
+                // Already reads from a puz file in initialize_puzzle
             }
         }
 

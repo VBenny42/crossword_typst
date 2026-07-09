@@ -1,8 +1,8 @@
 use std::error::Error;
 
 use crate::pdfgen::PdfCompiler;
-use crate::puzzle::{initialize_puzzle, input};
-use crate::types::{Direction, PuzzleState, BLANK_CELL};
+use crate::puzzle::input;
+use crate::types::{Direction, PuzzleState, BLACK_CELL, BLANK_CELL};
 
 macro_rules! try_or_continue {
     ($expr:expr, $msg:expr) => {
@@ -60,7 +60,7 @@ impl PuzzleState {
                 "Your choices are:
 1. Solve an across clue
 2. Solve a down clue
-3. Overwrite JSON file with blank puzzle data
+3. Overwrite file with blank puzzle data
 4. Print the current state of the puzzle
 5. Remove a clue's answer from the puzzle
 6. Remove all wrong answers from the puzzle
@@ -81,10 +81,27 @@ impl PuzzleState {
                     should_recompile = true;
                 }
                 "3" => {
-                    println!("Overwriting JSON file with blank puzzle data...");
-                    let blank_puzzle = initialize_puzzle(&self.args.puzzle_file_path)?;
+                    println!("Overwriting file with blank puzzle data...");
+                    let blank_puzzle_grid = self
+                        .puzzle
+                        .grid
+                        .blank
+                        .iter()
+                        .map(|row| {
+                            row.chars()
+                                .map(|c| {
+                                    if c != BLACK_CELL {
+                                        BLANK_CELL
+                                    } else {
+                                        BLACK_CELL
+                                    }
+                                })
+                                .collect()
+                        })
+                        .collect();
+
+                    self.puzzle.grid.blank.clone_from(&blank_puzzle_grid);
                     should_recompile = true;
-                    self.puzzle.grid.blank.clone_from(&blank_puzzle.grid.blank);
                 }
                 "4" => {
                     println!("Current state of the puzzle: {self}");

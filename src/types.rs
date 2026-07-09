@@ -2,8 +2,7 @@ use core::fmt;
 use std::{
     collections::HashMap,
     error::Error,
-    fs::File,
-    io::{Read, Write},
+    fs::{self, File},
     path::PathBuf,
     str::FromStr,
 };
@@ -99,12 +98,14 @@ impl OutputFormat {
                 serde_json::to_writer(file, &puzzle)?;
             }
             OutputFormat::Puz => {
-                let mut file = File::open(puz_path)?;
-                let mut data = vec![];
-                file.read_to_end(&mut data)?;
+                let mut puz_file = fs::read(puz_path)?;
 
+                // .puz format specifies that solution string is at 0x34
+                // and is width x length bytes long,
+                // with the blank string directly after
                 let write_length: usize = (puzzle.info.width * puzzle.info.height).into();
                 let start_position = 0x34 + write_length;
+
                 let blank_string = puzzle.grid.blank.concat();
 
                 assert!(
@@ -114,16 +115,15 @@ impl OutputFormat {
                 assert_eq!(
                     blank_string.len(),
                     write_length,
-                    "blank grid string length ({}) does not match expected write_length ({})",
+                    "Blank grid string length ({}) does not match expected write_length ({})",
                     blank_string.len(),
                     write_length
                 );
 
-                data[start_position..start_position + write_length]
+                puz_file[start_position..start_position + write_length]
                     .copy_from_slice(blank_string.as_bytes());
 
-                let mut output_file = File::create(output_path)?;
-                output_file.write_all(&data)?
+                fs::write(output_path, &puz_file)?;
             }
         }
         Ok(())
