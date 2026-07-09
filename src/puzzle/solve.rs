@@ -93,7 +93,7 @@ impl PuzzleState {
                     println!("You chose to remove a clue's answer. Please enter the clue number:");
                     let clue_number: u8 = try_or_continue!(input(), "Invalid digit:");
 
-                    try_or_continue!(self.remove_clue_answer(clue_number), "Error:");
+                    try_or_continue!(self.remove_clue_answer(clue_number), "Error removing clue:");
 
                     should_recompile = true;
                 }
