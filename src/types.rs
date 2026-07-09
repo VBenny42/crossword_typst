@@ -44,8 +44,8 @@ pub enum Direction {
 impl fmt::Display for Direction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Direction::Down => write!(f, "Down"),
-            Direction::Across => write!(f, "Across"),
+            Self::Down => write!(f, "Down"),
+            Self::Across => write!(f, "Across"),
         }
     }
 }
@@ -54,8 +54,8 @@ impl FromStr for Direction {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "1" => Ok(Direction::Across),
-            "2" => Ok(Direction::Down),
+            "1" => Ok(Self::Across),
+            "2" => Ok(Self::Down),
             _ => Err(format!("Invalid direction number: {s}")),
         }
     }
@@ -71,33 +71,33 @@ impl FromStr for OutputFormat {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "json" => Ok(OutputFormat::Json),
-            "puz" => Ok(OutputFormat::Puz),
+            "json" => Ok(Self::Json),
+            "puz" => Ok(Self::Puz),
             _ => Err(format!("Invalid OutputFormat: {s}")),
         }
     }
 }
 
 impl OutputFormat {
-    pub fn extension(&self) -> &'static str {
+    pub const fn extension(self) -> &'static str {
         match self {
-            OutputFormat::Json => "json",
-            OutputFormat::Puz => "puz",
+            Self::Json => "json",
+            Self::Puz => "puz",
         }
     }
 
     pub fn write_puzzle_to_file(
-        &self,
+        self,
         output_path: &PathBuf,
         puz_path: &PathBuf,
         puzzle: &Puzzle,
     ) -> Result<(), Box<dyn Error>> {
         match self {
-            OutputFormat::Json => {
+            Self::Json => {
                 let file = File::create(output_path)?;
                 serde_json::to_writer(file, &puzzle)?;
             }
-            OutputFormat::Puz => {
+            Self::Puz => {
                 let mut puz_file = fs::read(puz_path)?;
 
                 // .puz format specifies that solution string is at 0x34
@@ -141,9 +141,9 @@ impl FromStr for PdfStyle {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "normal" => Ok(PdfStyle::Normal),
-            "larger" => Ok(PdfStyle::Larger),
-            "landscape" => Ok(PdfStyle::Landscape),
+            "normal" => Ok(Self::Normal),
+            "larger" => Ok(Self::Larger),
+            "landscape" => Ok(Self::Landscape),
             _ => Err(format!("Invalid PdfStyle: {s}")),
         }
     }

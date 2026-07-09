@@ -7,7 +7,7 @@ use crate::{
 
 impl PuzzleState {
     pub(crate) fn parse_clue_input<'a>(&self, input: &'a str) -> Option<(u8, Option<&'a str>)> {
-        let count = input.chars().take_while(|c| c.is_ascii_digit()).count();
+        let count = input.chars().take_while(char::is_ascii_digit).count();
 
         if count == 0 {
             return None;
@@ -98,7 +98,7 @@ impl PuzzleState {
             (Some(_), Some(_)) => {
                 // Move onto seeing if one of the clues are already solved
             }
-        };
+        }
 
         let a_clue = across_clue.unwrap();
         let d_clue = down_clue.unwrap();
@@ -116,7 +116,7 @@ impl PuzzleState {
             (false, false) => {
                 // Move onto comparing clue lengths
             }
-        };
+        }
 
         if let Some(guess) = guess {
             match (guess.len() == a_clue.length, guess.len() == d_clue.length) {

@@ -84,7 +84,7 @@ impl PuzzleState {
                         && y < (clue_info.y + clue_info.length));
 
                 if in_word {
-                    *c = BLANK_CELL
+                    *c = BLANK_CELL;
                 }
             }
             *row = chars.into_iter().collect();

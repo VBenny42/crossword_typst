@@ -9,8 +9,8 @@ mod types;
 
 fn default_output_path(format: OutputFormat) -> PathBuf {
     let filename = format!("output.{}", format.extension());
-    ProjectDirs::from("com", "VBenny42", "crossword_typst").map_or(
-        PathBuf::from(&filename),
+    ProjectDirs::from("com", "VBenny42", "crossword_typst").map_or_else(
+        || PathBuf::from(&filename),
         |dirs| {
             let data_dir = dirs.data_dir().to_path_buf();
             fs::create_dir_all(&data_dir).ok();
@@ -88,7 +88,7 @@ a.hide_default_value(true).help(format!(
             if args.output_format == OutputFormat::Puz {
                 args.output_path = args.puzzle_file_path.clone();
             } else {
-                eprintln!("Output format is not puz, doing nothing")
+                eprintln!("Output format is not puz, doing nothing");
             }
         }
 

@@ -90,10 +90,10 @@ impl PuzzleState {
                         .map(|row| {
                             row.chars()
                                 .map(|c| {
-                                    if c != BLACK_CELL {
-                                        BLANK_CELL
-                                    } else {
+                                    if c == BLACK_CELL {
                                         BLACK_CELL
+                                    } else {
+                                        BLANK_CELL
                                     }
                                 })
                                 .collect()
@@ -197,12 +197,12 @@ impl PuzzleState {
                 .clues_info
                 .across
                 .get(&number)
-                .ok_or(format!("Clue number {number} not found in across clues"))?,
+                .ok_or_else(|| format!("Clue number {number} not found in across clues"))?,
             Direction::Down => self
                 .clues_info
                 .down
                 .get(&number)
-                .ok_or(format!("Clue number {number} not found in down clues"))?,
+                .ok_or_else(|| format!("Clue number {number} not found in down clues"))?,
         };
 
         let clues = match direction {
@@ -210,9 +210,10 @@ impl PuzzleState {
             Direction::Down => &self.puzzle.clues.down,
         };
 
-        let clue_text = clues
-            .get(&u16::from(number))
-            .map_or(format!("Unknown clue {number}"), |s| s.to_string());
+        let clue_text = clues.get(&u16::from(number)).map_or_else(
+            || format!("Unknown clue {number}"),
+            std::clone::Clone::clone,
+        );
 
         let (word_so_far, solution_word) = self.get_clue_so_far(number, direction);
 

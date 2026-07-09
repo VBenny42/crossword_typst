@@ -61,7 +61,7 @@ impl PuzzleState {
             });
         }
 
-        Ok(PuzzleState {
+        Ok(Self {
             puzzle,
             clues_info,
             args: args.clone(),

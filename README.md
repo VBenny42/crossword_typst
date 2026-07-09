@@ -55,3 +55,13 @@ At least rust 1.96 is needed to run.
 Also if output format is `puz`, the output `.puz` file will not have the correct
 checksums. To fix that, run
 `python validation/calculate_checksum_puz.py <file-to-recalculate-checksum>.py`
+
+## My personal way to run
+
+`cargo run -r -- -p (fd . -e puz <directory/with/crosswords> -d 1 -X ls -t | fzf --delimiter / --with-nth -1) --pdf-style landscape --show-correct-letters-only --hide-completed-clues -u`
+
+- Opens `fzf` with a list of `.puz` files to pick from, sorted by newest time
+  first, only showing filename
+- Compiles a `landscape` pdf
+- Only show the correct letters that are in guesses
+- Hide completed clues from the pdf
