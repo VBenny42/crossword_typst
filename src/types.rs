@@ -5,7 +5,7 @@ use puz_parse::Puzzle;
 
 use crate::Args;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct ClueInfo {
     pub length: usize,
     pub x: usize,

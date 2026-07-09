@@ -255,35 +255,14 @@ impl PuzzleState {
             }
         }
 
-        self.puzzle.grid.blank = self
-            .puzzle
-            .grid
-            .blank
-            .iter()
-            .enumerate()
-            .map(|(y, row)| {
-                row.chars()
-                    .enumerate()
-                    .map(|(x, c)| {
-                        if direction == Direction::Across
-                            && y == clue_info.y
-                            && x >= clue_info.x
-                            && x < (clue_info.x + clue_info.length)
-                        {
-                            guess.chars().nth(x - clue_info.x).unwrap_or(c)
-                        } else if direction == Direction::Down
-                            && x == clue_info.x
-                            && y >= clue_info.y
-                            && y < (clue_info.y + clue_info.length)
-                        {
-                            guess.chars().nth(y - clue_info.y).unwrap_or(c)
-                        } else {
-                            c
-                        }
-                    })
-                    .collect()
-            })
-            .collect();
+        for (i, ch) in guess.chars().enumerate() {
+            let (x, y) = match direction {
+                Direction::Across => (clue_info.x + i, clue_info.y),
+                Direction::Down => (clue_info.x, clue_info.y + i),
+            };
+
+            self.puzzle.grid.blank[y].replace_range(x..=x, &ch.to_string());
+        }
 
         Ok(())
     }

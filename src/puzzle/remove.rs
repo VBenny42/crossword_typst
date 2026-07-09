@@ -12,22 +12,20 @@ impl PuzzleState {
             .grid
             .blank
             .iter()
-            .enumerate()
-            .map(|(y, row)| {
-                row.chars()
-                    .enumerate()
-                    .map(|(x, c)| {
-                        if self.puzzle.grid.solution[y]
-                            .chars()
-                            .nth(x)
-                            .unwrap_or(BLANK_CELL)
-                            == c
-                        {
-                            c
-                        } else {
-                            BLANK_CELL
-                        }
-                    })
+            .zip(&self.puzzle.grid.solution)
+            .map(|(blank_row, solution_row)| {
+                blank_row
+                    .chars()
+                    .zip(solution_row.chars())
+                    .map(
+                        |(blank, solution)| {
+                            if blank == solution {
+                                blank
+                            } else {
+                                BLANK_CELL
+                            }
+                        },
+                    )
                     .collect()
             })
             .collect();
@@ -73,67 +71,50 @@ impl PuzzleState {
             }
         };
 
-        self.puzzle.grid.blank = self
-            .puzzle
-            .grid
-            .blank
-            .iter()
-            .enumerate()
-            .map(|(y, row)| {
-                row.chars()
-                    .enumerate()
-                    .map(|(x, c)| {
-                        if (direction == Direction::Across
-                            && y == clue_info.y
-                            && x >= clue_info.x
-                            && x < (clue_info.x + clue_info.length))
-                            || (direction == Direction::Down
-                                && x == clue_info.x
-                                && y >= clue_info.y
-                                && y < (clue_info.y + clue_info.length))
-                        {
-                            BLANK_CELL
-                        } else {
-                            c
-                        }
-                    })
-                    .collect()
-            })
-            .collect();
+        for (y, row) in self.puzzle.grid.blank.iter_mut().enumerate() {
+            let mut chars: Vec<char> = row.chars().collect();
+            for (x, c) in chars.iter_mut().enumerate() {
+                let in_word = (direction == Direction::Across
+                    && y == clue_info.y
+                    && x >= clue_info.x
+                    && x < (clue_info.x + clue_info.length))
+                    || (direction == Direction::Down
+                        && x == clue_info.x
+                        && y >= clue_info.y
+                        && y < (clue_info.y + clue_info.length));
+
+                if in_word {
+                    *c = BLANK_CELL
+                }
+            }
+            *row = chars.into_iter().collect();
+        }
 
         Ok(())
     }
 
     pub(crate) fn reveal_clue_answer(&mut self, number: u8) -> Result<(), Box<dyn Error>> {
-        let (direction, clue_info) = self.pick_direction_clue_info(number, None)?;
+        let (direction, clue_info) = self.select_clue(number, None)?;
+        let clue_info = *clue_info;
 
-        self.puzzle.grid.blank = self
-            .puzzle
-            .grid
-            .blank
-            .iter()
-            .enumerate()
-            .map(|(y, row)| {
-                row.chars()
-                    .enumerate()
-                    .map(|(x, c)| {
-                        if (direction == Direction::Across
-                            && y == clue_info.y
-                            && x >= clue_info.x
-                            && x < (clue_info.x + clue_info.length))
-                            || (direction == Direction::Down
-                                && x == clue_info.x
-                                && y >= clue_info.y
-                                && y < (clue_info.y + clue_info.length))
-                        {
-                            self.puzzle.grid.solution[y].chars().nth(x).unwrap()
-                        } else {
-                            c
-                        }
-                    })
-                    .collect()
-            })
-            .collect();
+        for (y, row) in self.puzzle.grid.blank.iter_mut().enumerate() {
+            let mut chars: Vec<char> = row.chars().collect();
+            for (x, c) in chars.iter_mut().enumerate() {
+                let in_word = (direction == Direction::Across
+                    && y == clue_info.y
+                    && x >= clue_info.x
+                    && x < (clue_info.x + clue_info.length))
+                    || (direction == Direction::Down
+                        && x == clue_info.x
+                        && y >= clue_info.y
+                        && y < (clue_info.y + clue_info.length));
+
+                if in_word {
+                    *c = self.puzzle.grid.solution[y].chars().nth(x).unwrap();
+                }
+            }
+            *row = chars.into_iter().collect();
+        }
 
         Ok(())
     }
