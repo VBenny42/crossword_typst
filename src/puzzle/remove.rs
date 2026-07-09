@@ -47,8 +47,8 @@ impl PuzzleState {
                 // Only first of across filled in, then remove whole down, and vice versa.
                 // If both have partial fills, ask the user which one to remove.
                 match (
-                    a_word_so_far[1..].chars().all(|c| c == BLANK_CELL),
-                    d_word_so_far[1..].chars().all(|c| c == BLANK_CELL),
+                    a_word_so_far.chars().skip(1).all(|c| c == BLANK_CELL),
+                    d_word_so_far.chars().skip(1).all(|c| c == BLANK_CELL),
                 ) {
                     (true, false) => (Direction::Down, d_clue),
                     (false, true) => (Direction::Across, a_clue),

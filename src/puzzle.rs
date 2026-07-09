@@ -80,8 +80,6 @@ impl fmt::Display for PuzzleState {
 }
 
 fn initialize_puzzle(file_path: &PathBuf) -> Result<Puzzle, Box<dyn Error>> {
-    // let puzzle = parse_file(file_path)?;
-
     let file = fs::File::open(file_path)?;
     let result = parse(file)?;
 
