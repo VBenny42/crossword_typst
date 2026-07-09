@@ -2,6 +2,7 @@ use puz_parse::{parse, Puzzle};
 use std::{
     collections::HashMap,
     error::Error,
+    fmt,
     fs::{self, File},
     path::PathBuf,
     str::FromStr,
@@ -51,11 +52,15 @@ impl PuzzleState {
             args: args.clone(),
         })
     }
+}
 
-    fn print_puzzle(&self) {
+impl fmt::Display for PuzzleState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f)?;
         for row in &self.puzzle.grid.blank {
-            println!("{row}");
+            writeln!(f, "{row}")?;
         }
+        Ok(())
     }
 }
 

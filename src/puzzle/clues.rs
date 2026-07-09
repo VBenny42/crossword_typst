@@ -2,11 +2,11 @@ use std::error::Error;
 
 use crate::{
     puzzle::input,
-    types::{ClueInfo, Direction, PuzzleState, BLANK_CELL},
+    types::{ClueInfo, Direction, PuzzleState},
 };
 
 impl PuzzleState {
-    pub(crate) fn check_for_clue_number(&self, input: &str) -> Option<u8> {
+    pub(crate) fn parse_clue_input<'a>(&self, input: &'a str) -> Option<(u8, Option<&'a str>)> {
         let count = input.chars().take_while(|c| c.is_ascii_digit()).count();
 
         if count == 0 {
@@ -24,9 +24,13 @@ impl PuzzleState {
             return None;
         }
 
-        first_word.parse::<u8>().ok().filter(|num| {
+        let clue_number = first_word.parse::<u8>().ok().filter(|num| {
             self.clues_info.across.contains_key(num) || self.clues_info.down.contains_key(num)
-        })
+        })?;
+
+        let guess = (!second_word.is_empty()).then_some(second_word);
+
+        Some((clue_number, guess))
     }
 
     pub(crate) fn get_clue_so_far(&self, number: u8, direction: Direction) -> (String, String) {
@@ -56,7 +60,7 @@ impl PuzzleState {
                 .iter()
                 .skip(clue_info.y)
                 .take(clue_info.length)
-                .map(|row| row.chars().nth(clue_info.x).unwrap_or(BLANK_CELL))
+                .map(|row| row.as_bytes()[clue_info.x] as char)
                 .collect(),
         };
         let solution_word: String = match direction {
@@ -70,14 +74,14 @@ impl PuzzleState {
                 .iter()
                 .skip(clue_info.y)
                 .take(clue_info.length)
-                .map(|row| row.chars().nth(clue_info.x).unwrap_or(BLANK_CELL))
+                .map(|row| row.as_bytes()[clue_info.x] as char)
                 .collect(),
         };
 
         (word_so_far, solution_word)
     }
 
-    pub(crate) fn pick_direction_clue_info(
+    pub(crate) fn select_clue(
         &self,
         number: u8,
         guess: Option<&str>,
@@ -86,54 +90,59 @@ impl PuzzleState {
         let down_clue = self.clues_info.down.get(&number);
 
         match (across_clue, down_clue) {
-            (Some(clue), None) => Ok((Direction::Across, clue)),
-            (None, Some(clue)) => Ok((Direction::Down, clue)),
-            (Some(a_clue), Some(d_clue)) => {
-                let (a_word_so_far, a_solution_word) =
-                    self.get_clue_so_far(number, Direction::Across);
-                let (d_word_so_far, d_solution_word) =
-                    self.get_clue_so_far(number, Direction::Down);
+            (Some(clue), None) => return Ok((Direction::Across, clue)),
+            (None, Some(clue)) => return Ok((Direction::Down, clue)),
+            (None, None) => {
+                return Err("Clue number not found in either across or down clues".into())
+            }
+            (Some(_), Some(_)) => {
+                // Move onto seeing if one of the clues are already solved
+            }
+        };
 
-                match (
-                    a_word_so_far == a_solution_word,
-                    d_word_so_far == d_solution_word,
-                ) {
-                    (true, false) => Ok((Direction::Down, d_clue)),
-                    (false, true) => Ok((Direction::Across, a_clue)),
-                    (true, true) => Err("Both across and down clues are already solved.".into()),
-                    (false, false) => {
-                        if let Some(guess) = guess {
-                            match (
-                                guess.len() == a_clue.length,
-                                guess.len() == d_clue.length,
-                            ) {
-                                (true, false) => return Ok((Direction::Across, a_clue)),
-                                (false, true) => return Ok((Direction::Down, d_clue)),
-                                // Should both of these cases just continue, and solve_clue would
-                                // return the wrong length error?
-                                (true, true) => {
-                                    // Continue to ask the user for direction choice
-                                }
-                                (false, false) => {
-                                    return Err("Your guess does not match the length of either across or down clues.".into())
-                                }
-                            }
-                        }
+        let a_clue = across_clue.unwrap();
+        let d_clue = down_clue.unwrap();
 
-                        println!("Clue number {number} exists in both across and down clues. Please choose clue direction:");
-                        println!("1. Across clue");
-                        println!("2. Down clue");
+        let (a_word_so_far, a_solution_word) = self.get_clue_so_far(number, Direction::Across);
+        let (d_word_so_far, d_solution_word) = self.get_clue_so_far(number, Direction::Down);
 
-                        let choice: Direction = input()?;
+        match (
+            a_word_so_far == a_solution_word,
+            d_word_so_far == d_solution_word,
+        ) {
+            (true, false) => return Ok((Direction::Down, d_clue)),
+            (false, true) => return Ok((Direction::Across, a_clue)),
+            (true, true) => return Err("Both across and down clues are already solved.".into()),
+            (false, false) => {
+                // Move onto comparing clue lengths
+            }
+        };
 
-                        match choice {
-                            Direction::Across => Ok((Direction::Across, a_clue)),
-                            Direction::Down => Ok((Direction::Down, d_clue)),
-                        }
-                    }
+        if let Some(guess) = guess {
+            match (guess.len() == a_clue.length, guess.len() == d_clue.length) {
+                (true, false) => return Ok((Direction::Across, a_clue)),
+                (false, true) => return Ok((Direction::Down, d_clue)),
+                (false, false) => {
+                    return Err(
+                        "Your guess does not match the length of either across or down clues."
+                            .into(),
+                    )
+                }
+                (true, true) => {
+                    // Continue to ask the user for direction choice
                 }
             }
-            (None, None) => Err("Clue number not found in either across or down clues".into()),
+        }
+
+        println!("Clue number {number} exists in both across and down clues. Please choose clue direction:");
+        println!("1. Across clue");
+        println!("2. Down clue");
+
+        let choice: Direction = input()?;
+
+        match choice {
+            Direction::Across => Ok((Direction::Across, a_clue)),
+            Direction::Down => Ok((Direction::Down, d_clue)),
         }
     }
 }

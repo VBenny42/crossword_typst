@@ -87,8 +87,7 @@ impl PuzzleState {
                     self.puzzle.grid.blank.clone_from(&blank_puzzle.grid.blank);
                 }
                 "4" => {
-                    println!("Current state of the puzzle:");
-                    self.print_puzzle();
+                    println!("Current state of the puzzle: {self}");
                 }
                 "5" => {
                     println!("You chose to remove a clue's answer. Please enter the clue number:");
@@ -123,32 +122,9 @@ impl PuzzleState {
                     write_puzzle_to_json(&self.args.json_output_path, &self.puzzle)?;
                     break;
                 }
-                // s if self.check_for_clue_number(s).is_some() => {
-                s if let Some(clue_number) = self.check_for_clue_number(s) => {
-                    let guess = match s.chars().any(|c| c.is_ascii_whitespace()) {
-                        true => s.split_whitespace().nth(1),
-                        // Supporting user typing in <CLUENUMBER><GUESS>
-                        // i.e. no space(s) between
-                        // Since check_for_clue_number returned true,
-                        // there must be a valid clue number
-                        false => {
-                            let digits = if clue_number < 10 {
-                                1
-                            } else if clue_number < 100 {
-                                2
-                            } else {
-                                3
-                            };
-                            match digits == s.len() {
-                                // only number was sent
-                                true => None,
-                                false => Some(&s[digits..]),
-                            }
-                        }
-                    };
-
+                s if let Some((clue_number, guess)) = self.parse_clue_input(s) => {
                     let (direction, _) = try_or_continue!(
-                        self.pick_direction_clue_info(clue_number, guess),
+                        self.select_clue(clue_number, guess),
                         "Error picking clue direction:"
                     );
 
@@ -196,12 +172,12 @@ impl PuzzleState {
                 .clues_info
                 .across
                 .get(&number)
-                .ok_or("Clue number not found in across clues")?,
+                .ok_or(format!("Clue number {number} not found in across clues"))?,
             Direction::Down => self
                 .clues_info
                 .down
                 .get(&number)
-                .ok_or("Clue number not found in down clues")?,
+                .ok_or(format!("Clue number {number} not found in down clues"))?,
         };
 
         let clues = match direction {
@@ -211,7 +187,7 @@ impl PuzzleState {
 
         let clue_text = clues
             .get(&u16::from(number))
-            .map_or("Unknown clue", |s| s.as_str());
+            .map_or(format!("Unknown clue {number}"), |s| s.to_string());
 
         let (word_so_far, solution_word) = self.get_clue_so_far(number, direction);
 
