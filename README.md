@@ -42,3 +42,11 @@ Just write puzzle data to JSON without generating a PDF:
 ```sh
 crossword_typst -p puzzle.puz -w
 ```
+
+## Notes
+
+At least rust 1.96 is needed to run.
+
+Also if output format is `puz`, the output `.puz` file will not have the correct
+checksums. To fix that, run
+`python validation/calculate_checksum_puz.py <file-to-recalculate-checksum>.py`

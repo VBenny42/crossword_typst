@@ -1,37 +1,50 @@
-use clap::{ArgAction::SetTrue, Parser};
+use crate::types::{OutputFormat, PdfStyle, PuzzleState};
+use clap::{parser::ValueSource, ArgAction::SetTrue, CommandFactory, FromArgMatches, Parser};
 use directories::ProjectDirs;
-use std::{
-    fs::{self},
-    path::PathBuf,
-};
-
-use crate::types::{PdfStyle, PuzzleState};
+use std::{fs, path::PathBuf};
 
 mod pdfgen;
 mod puzzle;
 mod types;
 
-fn default_json_path() -> PathBuf {
+fn default_output_path(format: OutputFormat) -> PathBuf {
+    let filename = format!("output.{}", format.extension());
     ProjectDirs::from("com", "VBenny42", "crossword_typst").map_or(
-        PathBuf::from("output.json"),
+        PathBuf::from(&filename),
         |dirs| {
             let data_dir = dirs.data_dir().to_path_buf();
             fs::create_dir_all(&data_dir).ok();
-            data_dir.join("output.json")
+            data_dir.join(&filename)
         },
     )
 }
 
 #[derive(Parser, Debug, Clone)]
 pub struct Args {
-    #[arg(short, long, default_value_os_t = default_json_path(), help="Path to where json should be saved")]
-    json_output_path: PathBuf,
+    #[arg(
+        long,
+        default_value_os_t = default_output_path(OutputFormat::Json),
+        help = "Path to where output should be saved"
+    )]
+    output_path: PathBuf,
 
     #[arg(short, long, help = "Path to .puz file to be read")]
     puzzle_file_path: PathBuf,
 
-    #[arg(short, long, action = SetTrue, help = "Just write to json file and exit")]
-    write_to_json_only: bool,
+    #[arg(short, long, action = SetTrue, help = "Just write the output file and exit")]
+    write_only: bool,
+
+    #[arg(
+        short,
+        long,
+        value_enum,
+        default_value_t = OutputFormat::Json,
+        help = "Format to write puzzle state to: json or puz"
+    )]
+    output_format: OutputFormat,
+
+    #[arg(short, long, action = SetTrue, help = "Update the same .puz file that's being read. Writing to puz does not recalculate checksums")]
+    update_puz_file: bool,
 
     #[arg(short, long, action = SetTrue, help = "Compile the PDF with nord colors")]
     nord_colors: bool,
@@ -53,12 +66,42 @@ pub struct Args {
     pdf_style: PdfStyle,
 }
 
+impl Args {
+    /// Parses CLI args, re-deriving `output_path`'s default to match
+    /// `output_format` if the user didn't explicitly pass --output-path.
+    pub fn parse_with_format_aware_default() -> Self {
+        let command = Self::command().mut_arg("output_path", |a| {
+a.hide_default_value(true).help(format!(
+            "Path to where output should be saved [default: {} (extension follows --output-format)]",
+            default_output_path(OutputFormat::Json).display()
+        ))
+        });
+
+        let matches = command.get_matches();
+        let mut args = Self::from_arg_matches(&matches).unwrap_or_else(|e| e.exit());
+
+        if matches.value_source("output_path") == Some(ValueSource::DefaultValue) {
+            args.output_path = default_output_path(args.output_format);
+        }
+
+        if args.update_puz_file {
+            if args.output_format == OutputFormat::Puz {
+                args.output_path = args.puzzle_file_path.clone();
+            } else {
+                eprintln!("Output format is not puz, doing nothing")
+            }
+        }
+
+        args
+    }
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args = Args::parse();
+    let args = Args::parse_with_format_aware_default();
 
     let mut state = PuzzleState::new(&args)?;
 
-    if args.write_to_json_only {
+    if args.write_only {
         return Ok(());
     }
 

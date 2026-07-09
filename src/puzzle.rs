@@ -8,7 +8,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::types::{ClueInfo, CluesInfo, PuzzleState, BLACK_CELL, BLANK_CELL};
+use crate::types::{ClueInfo, CluesInfo, OutputFormat, PuzzleState, BLACK_CELL, BLANK_CELL};
 
 mod clues;
 mod remove;
@@ -18,19 +18,34 @@ impl PuzzleState {
     pub fn new(args: &crate::Args) -> Result<Self, Box<dyn Error>> {
         let mut puzzle = initialize_puzzle(&args.puzzle_file_path)?;
 
-        if File::open(&args.json_output_path).is_ok() {
-        } else {
-            eprintln!("JSON file does not exist. Creating a new one...");
-            write_puzzle_to_json(&args.json_output_path, &puzzle)?;
-        }
+        match args.output_format {
+            OutputFormat::Json => {
+                if File::open(&args.output_path).is_ok() {
+                } else {
+                    eprintln!("JSON file does not exist. Creating a new one...");
+                    args.output_format.write_puzzle_to_file(
+                        &args.output_path,
+                        &args.puzzle_file_path,
+                        &puzzle,
+                    )?;
+                }
 
-        let read_puzzle = read_puzzle_from_json(&args.json_output_path)?;
+                let read_puzzle = read_puzzle_from_json(&args.output_path)?;
 
-        if read_puzzle.info.title == puzzle.info.title {
-            puzzle.grid.blank.clone_from(&read_puzzle.grid.blank);
-        } else {
-            eprintln!("Warning: The puzzle title in the JSON file does not match the original puzzle. Overwriting JSON file with blank puzzle data...");
-            write_puzzle_to_json(&args.json_output_path, &puzzle)?;
+                if read_puzzle.info.title == puzzle.info.title {
+                    puzzle.grid.blank.clone_from(&read_puzzle.grid.blank);
+                } else {
+                    eprintln!("Warning: The puzzle title in the JSON file does not match the original puzzle. Overwriting JSON file with blank puzzle data...");
+                    args.output_format.write_puzzle_to_file(
+                        &args.output_path,
+                        &args.puzzle_file_path,
+                        &puzzle,
+                    )?;
+                }
+            }
+            OutputFormat::Puz => {
+                // Don't initialize from .puz file
+            }
         }
 
         let clues_info = extract_clue_info(&puzzle);
@@ -196,10 +211,4 @@ fn read_puzzle_from_json(json_output_path: &PathBuf) -> Result<Puzzle, Box<dyn E
     let reader = std::io::BufReader::new(file);
     let puzzle = serde_json::from_reader(reader)?;
     Ok(puzzle)
-}
-
-fn write_puzzle_to_json(json_output_path: &PathBuf, puzzle: &Puzzle) -> Result<(), Box<dyn Error>> {
-    let file = File::create(json_output_path)?;
-    serde_json::to_writer(file, &puzzle)?;
-    Ok(())
 }

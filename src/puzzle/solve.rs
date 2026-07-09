@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use crate::pdfgen::PdfCompiler;
-use crate::puzzle::{initialize_puzzle, input, write_puzzle_to_json};
+use crate::puzzle::{initialize_puzzle, input};
 use crate::types::{Direction, PuzzleState, BLANK_CELL};
 
 macro_rules! try_or_continue {
@@ -119,7 +119,11 @@ impl PuzzleState {
                 }
                 "8" => {
                     println!("Exiting...");
-                    write_puzzle_to_json(&self.args.json_output_path, &self.puzzle)?;
+                    self.args.output_format.write_puzzle_to_file(
+                        &self.args.output_path,
+                        &self.args.puzzle_file_path,
+                        &self.puzzle,
+                    )?;
                     break;
                 }
                 s if let Some((clue_number, guess)) = self.parse_clue_input(s) => {
@@ -152,7 +156,11 @@ impl PuzzleState {
                 let start = std::time::Instant::now();
 
                 compiler.compile_pdf(self);
-                write_puzzle_to_json(&self.args.json_output_path, &self.puzzle)?;
+                self.args.output_format.write_puzzle_to_file(
+                    &self.args.output_path,
+                    &self.args.puzzle_file_path,
+                    &self.puzzle,
+                )?;
 
                 println!("Took: {:?}", start.elapsed());
             }

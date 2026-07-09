@@ -1784,9 +1784,8 @@ dependencies = [
 
 [[package]]
 name = "puz-parse"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d63c9d25def8799bb36c85c581c34cda3c307a01f80d39df6c5661fb0e4f12a0"
+version = "0.1.0"
+source = "git+https://github.com/VBenny42/puz.rs.git?branch=fix-clue-checking#a092e787967e021a5ebff032b5542cbdf4cbd7f8"
 dependencies = [
  "byteorder",
  "serde",
