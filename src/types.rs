@@ -103,7 +103,7 @@ impl OutputFormat {
                 // .puz format specifies that solution string is at 0x34
                 // and is width x length bytes long,
                 // with the blank string directly after
-                let write_length: usize = (puzzle.info.width * puzzle.info.height).into();
+                let write_length: usize = puzzle.info.width as usize * puzzle.info.height as usize;
                 let start_position = 0x34 + write_length;
 
                 let blank_string = puzzle.grid.blank.concat();
