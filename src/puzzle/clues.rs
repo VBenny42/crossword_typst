@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{cmp::Ordering, error::Error};
 
 use crate::{
     puzzle::input,
@@ -129,6 +129,27 @@ impl PuzzleState {
                     )
                 }
                 (true, true) => {
+                    // Check which one is closer to the actual answer
+                }
+            }
+
+            let across_closeness = guess
+                .chars()
+                .zip(a_solution_word.chars())
+                .filter(|(guess, solution)| guess.eq_ignore_ascii_case(solution))
+                .count();
+            let down_closeness = guess
+                .chars()
+                .zip(d_solution_word.chars())
+                .filter(|(guess, solution)| guess.eq_ignore_ascii_case(solution))
+                .count();
+
+            match across_closeness.cmp(&down_closeness) {
+                // It's more likely across
+                Ordering::Greater => return Ok((Direction::Across, a_clue)),
+                // It's more likely down
+                Ordering::Less => return Ok((Direction::Down, d_clue)),
+                Ordering::Equal => {
                     // Continue to ask the user for direction choice
                 }
             }
