@@ -97,6 +97,25 @@ impl PuzzleState {
         let (direction, clue_info) = self.select_clue(number, None)?;
         let clue_info = *clue_info;
 
+        {
+            let clue_text = match direction {
+                Direction::Across => self
+                    .puzzle
+                    .clues
+                    .across
+                    .get(&u16::from(number))
+                    .expect("We should have a valid clue at this point"),
+                Direction::Down => self
+                    .puzzle
+                    .clues
+                    .down
+                    .get(&u16::from(number))
+                    .expect("We should have a valid clue at this point"),
+            };
+
+            println!("{number}. {clue_text}, {direction}.");
+        }
+
         for (y, row) in self.puzzle.grid.blank.iter_mut().enumerate() {
             let mut chars: Vec<char> = row.chars().collect();
             for (x, c) in chars.iter_mut().enumerate() {
