@@ -129,7 +129,7 @@ impl PuzzleState {
                         && y < (clue_info.y + clue_info.length));
 
                 if in_word {
-                    *c = self.puzzle.grid.solution[y].chars().nth(x).unwrap();
+                    *c = self.puzzle.grid.solution[y].as_bytes()[x] as char;
                 }
             }
             *row = chars.into_iter().collect();

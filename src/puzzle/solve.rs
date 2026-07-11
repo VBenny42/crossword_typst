@@ -287,7 +287,10 @@ impl PuzzleState {
                 Direction::Down => (clue_info.x, clue_info.y + i),
             };
 
-            self.puzzle.grid.blank[y].replace_range(x..=x, &ch.to_string());
+            // SAFETY: ch is guaranteed to be valid UTF-8
+            unsafe {
+                self.puzzle.grid.blank[y].as_bytes_mut()[x] = ch as u8;
+            }
         }
 
         Ok(())
