@@ -180,6 +180,8 @@ impl PuzzleState {
                 )?;
 
                 println!("Took: {:?}", start.elapsed());
+
+                should_recompile = false;
             }
         }
 
