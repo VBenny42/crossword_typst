@@ -77,7 +77,7 @@
   )
 }
 
-#let crossword(puzzle) = {
+#let crossword(puzzle, clues_info) = {
   let puzzle_grid = puzzle.grid.at("blank")
 
   let puzzle_width = (11in - 0.5in) * 0.7
@@ -97,6 +97,17 @@
 
   let filled_cells = 0
   let all_cells = 0
+
+  if clues_info != none {
+    for (num, info) in clues_info.at("across").pairs() {
+      number_to_coord.insert(str(info.x) + "," + str(info.y), num)
+      coord_to_number.insert(num, (info.x, info.y))
+    }
+    for (num, info) in clues_info.at("down").pairs() {
+      number_to_coord.insert(str(info.x) + "," + str(info.y), num)
+      coord_to_number.insert(num, (info.x, info.y))
+    }
+  }
 
   for y in range(puzzle.info.height) {
     for x in range(puzzle.info.width) {
@@ -121,24 +132,26 @@
         filled_cells += 1
       }
 
-      let starts-across = (
-        (x == 0 or puzzle_grid.at(y).clusters().at(x - 1) == BLACK_CELL)
-          and (
-            x + 1 < puzzle.info.width
-              and puzzle_grid.at(y).clusters().at(x + 1) != BLACK_CELL
-          )
-      )
-      let starts-down = (
-        (y == 0 or puzzle_grid.at(y - 1).clusters().at(x) == BLACK_CELL)
-          and (
-            y + 1 < puzzle.info.height
-              and puzzle_grid.at(y + 1).clusters().at(x) != BLACK_CELL
-          )
-      )
-      if starts-across or starts-down {
-        number_to_coord.insert(str(x) + "," + str(y), n)
-        coord_to_number.insert(str(n), (x, y))
-        n += 1
+      if clues_info == none {
+        let starts-across = (
+          (x == 0 or puzzle_grid.at(y).clusters().at(x - 1) == BLACK_CELL)
+            and (
+              x + 1 < puzzle.info.width
+                and puzzle_grid.at(y).clusters().at(x + 1) != BLACK_CELL
+            )
+        )
+        let starts-down = (
+          (y == 0 or puzzle_grid.at(y - 1).clusters().at(x) == BLACK_CELL)
+            and (
+              y + 1 < puzzle.info.height
+                and puzzle_grid.at(y + 1).clusters().at(x) != BLACK_CELL
+            )
+        )
+        if starts-across or starts-down {
+          number_to_coord.insert(str(x) + "," + str(y), n)
+          coord_to_number.insert(str(n), (x, y))
+          n += 1
+        }
       }
     }
   }
@@ -194,16 +207,20 @@
     let word_solved = false
     let (x, y) = clue_coord
 
-    while x <= puzzle.info.width {
-      let next_cell = puzzle_grid.at(y).clusters().at(x)
-      if next_cell == BLANK_CELL {
-        break
+    if clues_info == none {
+      while x <= puzzle.info.width {
+        let next_cell = puzzle_grid.at(y).clusters().at(x)
+        if next_cell == BLANK_CELL {
+          break
+        }
+        if next_cell == BLACK_CELL or x + 1 == puzzle.info.width {
+          word_solved = true
+          break
+        }
+        x += 1
       }
-      if next_cell == BLACK_CELL or x + 1 == puzzle.info.width {
-        word_solved = true
-        break
-      }
-      x += 1
+    } else {
+      word_solved = clues_info.at("across").at(clue_num).solved
     }
 
     let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
@@ -242,16 +259,20 @@
     let word_solved = false
     let (x, y) = clue_coord
 
-    while y <= puzzle.info.height {
-      let next_cell = puzzle_grid.at(y).clusters().at(x)
-      if next_cell == BLANK_CELL {
-        break
+    if clues_info == none {
+      while y <= puzzle.info.height {
+        let next_cell = puzzle_grid.at(y).clusters().at(x)
+        if next_cell == BLANK_CELL {
+          break
+        }
+        if next_cell == BLACK_CELL or y + 1 == puzzle.info.height {
+          word_solved = true
+          break
+        }
+        y += 1
       }
-      if next_cell == BLACK_CELL or y + 1 == puzzle.info.height {
-        word_solved = true
-        break
-      }
-      y += 1
+    } else {
+      word_solved = clues_info.at("down").at(clue_num).solved
     }
 
     let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
@@ -449,4 +470,11 @@
 }
 
 #let puzzle_json = json(bytes(inputs.crossword_json))
-#crossword(puzzle_json)
+
+#let clues_info_json = if "clues_info" in inputs {
+  json(bytes(inputs.clues_info))
+} else {
+  none
+}
+
+#crossword(puzzle_json, clues_info_json)

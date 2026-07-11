@@ -31,7 +31,53 @@
 #let BLANK_CELL = "-"
 #let BLACK_CELL = "."
 
-#let crossword(puzzle) = {
+#let progress(
+  percent,
+  height: 100%,
+  width: 100%,
+  bg: background_color,
+  fg: foreground_color,
+  stroke: 1pt + gray,
+) = {
+  box(
+    height: height,
+    width: width,
+    stroke: stroke,
+    fill: bg,
+    {
+      if percent > 0 {
+        box(height: 100%, width: width * percent, fill: fg)
+      }
+
+      let color = if percent < 0.5 { fg } else { bg }
+      let inverse_color = if percent < 0.5 { bg } else { fg }
+
+      if percent >= 0.44 and percent <= 0.56 {
+        place(
+          center + horizon,
+          text(
+            fill: inverse_color,
+            stroke: 1pt + inverse_color,
+            size: 9pt,
+            weight: "bold",
+            str(int(percent * 100)) + "%",
+          ),
+        )
+      }
+      place(
+        center + horizon,
+        text(
+          fill: color,
+          size: 9pt,
+          weight: "bold",
+          str(int(percent * 100)) + "%",
+        ),
+      )
+    },
+  )
+}
+
+#let crossword(puzzle, clues_info) = {
   let puzzle_grid = puzzle.grid.at("blank")
 
   // Allotted space should be 3/4 of usable page width
@@ -45,10 +91,27 @@
   let number_to_coord = (:)
   let coord_to_number = (:)
   let n = 1
+
+  let filled_cells = 0
+  let all_cells = 0
+
+  if clues_info != none {
+    for (num, info) in clues_info.at("across").pairs() {
+      number_to_coord.insert(str(info.x) + "," + str(info.y), num)
+      coord_to_number.insert(num, (info.x, info.y))
+    }
+    for (num, info) in clues_info.at("down").pairs() {
+      number_to_coord.insert(str(info.x) + "," + str(info.y), num)
+      coord_to_number.insert(num, (info.x, info.y))
+    }
+  }
+
   for y in range(puzzle.info.height) {
     for x in range(puzzle.info.width) {
       let cell = puzzle_grid.at(y).clusters().at(x)
       if cell == BLACK_CELL { continue }
+
+      all_cells += 1
 
       let solution_cell = puzzle.grid.solution.at(y).clusters().at(x)
 
@@ -60,30 +123,42 @@
         wrong_letter_exists = true
       }
 
-      let starts-across = (
-        (x == 0 or puzzle_grid.at(y).clusters().at(x - 1) == BLACK_CELL)
-          and (
-            x + 1 < puzzle.info.width
-              and puzzle_grid.at(y).clusters().at(x + 1) != BLACK_CELL
-          )
-      )
-      let starts-down = (
-        (y == 0 or puzzle_grid.at(y - 1).clusters().at(x) == BLACK_CELL)
-          and (
-            y + 1 < puzzle.info.height
-              and puzzle_grid.at(y + 1).clusters().at(x) != BLACK_CELL
-          )
-      )
-      if starts-across or starts-down {
-        number_to_coord.insert(str(x) + "," + str(y), n)
-        coord_to_number.insert(str(n), (x, y))
-        n += 1
+      if cell == solution_cell {
+        filled_cells += 1
+      }
+
+      if clues_info == none {
+        let starts-across = (
+          (x == 0 or puzzle_grid.at(y).clusters().at(x - 1) == BLACK_CELL)
+            and (
+              x + 1 < puzzle.info.width
+                and puzzle_grid.at(y).clusters().at(x + 1) != BLACK_CELL
+            )
+        )
+        let starts-down = (
+          (y == 0 or puzzle_grid.at(y - 1).clusters().at(x) == BLACK_CELL)
+            and (
+              y + 1 < puzzle.info.height
+                and puzzle_grid.at(y + 1).clusters().at(x) != BLACK_CELL
+            )
+        )
+        if starts-across or starts-down {
+          number_to_coord.insert(str(x) + "," + str(y), n)
+          coord_to_number.insert(str(n), (x, y))
+          n += 1
+        }
       }
     }
   }
 
+  let is_finished = not space_exists and not wrong_letter_exists
+
+  let percent_complete = if all_cells > 0 {
+    (filled_cells / all_cells) * 100
+  } else { 0 }
+
   set page(
-    header: if not space_exists and not wrong_letter_exists {
+    header: if is_finished {
       [#puzzle.info.title #h(1fr) _Finished_]
     } else if wrong_letter_exists == true {
       [#puzzle.info.title #h(1fr) #text(
@@ -91,6 +166,12 @@
           weight: "bold",
           "WRONG GUESS EXISTS",
         )]
+    } else if percent_complete > 0 {
+      grid(
+        columns: (1fr, auto),
+        puzzle.info.title,
+        progress(percent_complete / 100, width: 11em, height: 0.7em),
+      )
     } else {
       puzzle.info.title
     },
@@ -120,17 +201,23 @@
       let word_solved = false
       let (x, y) = clue_coord
 
-      while x <= puzzle.info.width {
-        let next_cell = puzzle_grid.at(y).clusters().at(x)
-        if next_cell == BLANK_CELL {
-          break
+      if clues_info == none {
+        while x <= puzzle.info.width {
+          let next_cell = puzzle_grid.at(y).clusters().at(x)
+          if next_cell == BLANK_CELL {
+            break
+          }
+          if next_cell == BLACK_CELL or x + 1 == puzzle.info.width {
+            word_solved = true
+            break
+          }
+          x += 1
         }
-        if next_cell == BLACK_CELL or x + 1 == puzzle.info.width {
-          word_solved = true
-          break
-        }
-        x += 1
+      } else {
+        word_solved = clues_info.at("across").at(clue_num).solved
       }
+
+      let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
 
       if word_solved {
         if (
@@ -140,12 +227,10 @@
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
-          text(
-            size: 9pt,
-          )[*#clue.at(0).* #clue.at(1)],
+          clue_text,
         )
       } else {
-        text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
+        clue_text
       }
       linebreak()
     }
@@ -160,22 +245,29 @@
       let word_solved = false
       let (x, y) = clue_coord
 
-      while y <= puzzle.info.height {
-        let next_cell = puzzle_grid.at(y).clusters().at(x)
-        if next_cell == BLANK_CELL {
-          break
+      if clues_info == none {
+        while y <= puzzle.info.height {
+          let next_cell = puzzle_grid.at(y).clusters().at(x)
+          if next_cell == BLANK_CELL {
+            break
+          }
+          if next_cell == BLACK_CELL or y + 1 == puzzle.info.height {
+            word_solved = true
+            break
+          }
+          y += 1
         }
-        if next_cell == BLACK_CELL or y + 1 == puzzle.info.height {
-          word_solved = true
-          break
-        }
-        y += 1
+      } else {
+        word_solved = clues_info.at("down").at(clue_num).solved
       }
 
       let clue_text = text(size: 9pt)[*#clue.at(0).* #clue.at(1)]
 
       if word_solved {
-        if inputs.hide_completed_clues { continue }
+        if (
+          inputs.hide_completed_clues == "true"
+            or inputs.hide_completed_clues == true
+        ) { continue }
         strike(
           background: true,
           stroke: (paint: red_color, thickness: 2pt),
@@ -266,4 +358,11 @@
 }
 
 #let puzzle_json = json(bytes(inputs.crossword_json))
-#crossword(puzzle_json)
+
+#let clues_info_json = if "clues_info" in inputs {
+  json(bytes(inputs.clues_info))
+} else {
+  none
+}
+
+#crossword(puzzle_json, clues_info_json)
