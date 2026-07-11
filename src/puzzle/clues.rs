@@ -1,9 +1,15 @@
-use std::{cmp::Ordering, error::Error};
+use std::{cmp::Ordering, collections::HashSet, error::Error};
 
 use crate::{
     puzzle::input,
-    types::{ClueInfo, Direction, PuzzleState},
+    types::{ClueInfo, CluesInfo, Direction, PuzzleState},
 };
+
+impl CluesInfo {
+    pub fn get_clues_json(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string(&self)
+    }
+}
 
 impl PuzzleState {
     pub(crate) fn parse_clue_input<'a>(&self, input: &'a str) -> Option<(u8, Option<&'a str>)> {
@@ -164,6 +170,41 @@ impl PuzzleState {
         match choice {
             Direction::Across => Ok((Direction::Across, a_clue)),
             Direction::Down => Ok((Direction::Down, d_clue)),
+        }
+    }
+
+    pub(crate) fn update_clues_status(&mut self) {
+        let mut solved_across_clues: HashSet<u8> = HashSet::new();
+        for (clue_num, _) in self.clues_info.across.iter() {
+            let (clue_so_far, solution_word) = self.get_clue_so_far(*clue_num, Direction::Across);
+            if clue_so_far == solution_word {
+                solved_across_clues.insert(*clue_num);
+            };
+        }
+
+        let mut solved_down_clues: HashSet<u8> = HashSet::new();
+        for (clue_num, _) in self.clues_info.down.iter() {
+            let (clue_so_far, solution_word) = self.get_clue_so_far(*clue_num, Direction::Down);
+            if clue_so_far == solution_word {
+                solved_down_clues.insert(*clue_num);
+            };
+        }
+
+        for clue_num in solved_across_clues.iter() {
+            let clue_info = self
+                .clues_info
+                .across
+                .get_mut(clue_num)
+                .expect("Always going to exist");
+            clue_info.solved = true;
+        }
+        for clue_num in solved_down_clues.iter() {
+            let clue_info = self
+                .clues_info
+                .down
+                .get_mut(clue_num)
+                .expect("Always going to exist");
+            clue_info.solved = true;
         }
     }
 }

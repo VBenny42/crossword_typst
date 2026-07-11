@@ -19,7 +19,7 @@ fn default_output_path(format: OutputFormat) -> PathBuf {
     )
 }
 
-#[derive(Parser, Debug, Clone)]
+#[derive(Parser, Debug, Clone, Default)]
 pub struct Args {
     #[arg(
         long,
@@ -76,7 +76,7 @@ impl Args {
         let command = Self::command().mut_arg("output_path", |a| {
 a.hide_default_value(true).help(format!(
             "Path to where output should be saved [default: {} (extension follows --output-format)]",
-            default_output_path(OutputFormat::Puz).display()
+            default_output_path(OutputFormat::default()).display()
         ))
         });
 

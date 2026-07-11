@@ -452,6 +452,7 @@ dependencies = [
  "clap",
  "directories",
  "puz-parse",
+ "serde",
  "serde_json",
  "typst",
  "typst-as-lib",

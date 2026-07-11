@@ -43,6 +43,8 @@ impl PuzzleState {
         let mut should_recompile = false;
 
         let compiler = PdfCompiler::new(self.args.pdf_style);
+
+        self.update_clues_status();
         compiler.compile_pdf(self)?;
 
         println!("Can solve clues by entering the clue number followed by your guess, e.g., `<CLUENUMBER> <ANSWER>`.");
@@ -140,6 +142,7 @@ impl PuzzleState {
                         &self.args.output_path,
                         &self.args.puzzle_file_path,
                         &self.puzzle,
+                        &self.clues_info,
                     )?;
                     break;
                 }
@@ -172,11 +175,14 @@ impl PuzzleState {
             if should_recompile {
                 let start = std::time::Instant::now();
 
+                self.update_clues_status();
+
                 compiler.compile_pdf(self)?;
                 self.args.output_format.write_puzzle_to_file(
                     &self.args.output_path,
                     &self.args.puzzle_file_path,
                     &self.puzzle,
+                    &self.clues_info,
                 )?;
 
                 println!("Took: {:?}", start.elapsed());

@@ -9,10 +9,8 @@ use typst::{
 use typst_as_lib::{typst_kit_options::TypstKitFontOptions, TypstEngine};
 use typst_pdf::PdfOptions;
 
-use crate::{
-    puzzle::get_puz_json,
-    types::{CluesInfo, PdfStyle, PuzzleState, BLANK_CELL},
-};
+use crate::puzzle::get_puz_json;
+use crate::types::{CluesInfo, PdfStyle, PuzzleState, BLANK_CELL};
 
 static TEMPLATE_NORMAL_FILE: &str = include_str!("../templates/template.typ");
 static TEMPLATE_LARGER_FILE: &str = include_str!("../templates/template-larger.typ");
@@ -47,6 +45,10 @@ impl PdfCompiler {
             (
                 "hide_completed_clues".into(),
                 state.args.hide_completed_clues.into_value(),
+            ),
+            (
+                "clues_info".into(),
+                state.clues_info.get_clues_json().unwrap().into_value(),
             ),
         ]
         .into_iter()

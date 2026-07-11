@@ -8,17 +8,20 @@ use std::{
 };
 
 use puz_parse::Puzzle;
+use serde::Serialize;
 
 use crate::Args;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize)]
 pub struct ClueInfo {
     pub length: usize,
     pub x: usize,
     pub y: usize,
+
+    pub solved: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct CluesInfo {
     pub across: HashMap<u8, ClueInfo>,
     pub down: HashMap<u8, ClueInfo>,
@@ -61,9 +64,10 @@ impl FromStr for Direction {
     }
 }
 
-#[derive(clap::ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(clap::ValueEnum, Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum OutputFormat {
     Json,
+    #[default]
     Puz,
 }
 
@@ -91,11 +95,19 @@ impl OutputFormat {
         output_path: &PathBuf,
         puz_path: &PathBuf,
         puzzle: &Puzzle,
+        clues_info: &CluesInfo,
     ) -> Result<(), Box<dyn Error>> {
         match self {
             Self::Json => {
                 let file = File::create(output_path)?;
                 serde_json::to_writer(file, &puzzle)?;
+
+                let clue_info_path = output_path
+                    .parent()
+                    .unwrap_or_else(|| std::path::Path::new("."))
+                    .join("clues_info.json");
+                let clue_info_file = File::create(clue_info_path)?;
+                serde_json::to_writer(clue_info_file, &clues_info)?;
             }
             Self::Puz => {
                 let mut puz_file = fs::read(puz_path)?;
@@ -130,8 +142,9 @@ impl OutputFormat {
     }
 }
 
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug, Copy, Default)]
 pub enum PdfStyle {
+    #[default]
     Normal,
     Larger,
     Landscape,

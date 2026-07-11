@@ -18,6 +18,8 @@ impl PuzzleState {
     pub fn new(args: &crate::Args) -> Result<Self, Box<dyn Error>> {
         let mut puzzle = initialize_puzzle(&args.puzzle_file_path)?;
 
+        let clues_info = extract_clue_info(&puzzle);
+
         match args.output_format {
             OutputFormat::Json => {
                 if File::open(&args.output_path).is_ok() {
@@ -27,6 +29,7 @@ impl PuzzleState {
                         &args.output_path,
                         &args.puzzle_file_path,
                         &puzzle,
+                        &clues_info,
                     )?;
                 }
 
@@ -40,6 +43,7 @@ impl PuzzleState {
                         &args.output_path,
                         &args.puzzle_file_path,
                         &puzzle,
+                        &clues_info,
                     )?;
                 }
             }
@@ -47,8 +51,6 @@ impl PuzzleState {
                 // Already reads from a puz file in initialize_puzzle
             }
         }
-
-        let clues_info = extract_clue_info(&puzzle);
 
         if args.show_clue_length {
             puzzle.clues.across.iter_mut().for_each(|(k, v)| {
@@ -148,6 +150,8 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                         length: clue_length,
                         x,
                         y,
+
+                        solved: false,
                     },
                 );
             }
@@ -184,6 +188,8 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                         length: clue_length,
                         x,
                         y,
+
+                        solved: false,
                     },
                 );
             }
