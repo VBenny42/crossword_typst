@@ -43,7 +43,7 @@ impl PuzzleState {
         let mut should_recompile = false;
 
         let compiler = PdfCompiler::new(self.args.pdf_style);
-        compiler.compile_pdf(self);
+        compiler.compile_pdf(self)?;
 
         println!("Can solve clues by entering the clue number followed by your guess, e.g., `<CLUENUMBER> <ANSWER>`.");
         println!("Can also pick a clue to solve by entering the clue number on its own, e.g., `<CLUENUMBER>`, and then entering your guess when prompted.");
@@ -172,7 +172,7 @@ impl PuzzleState {
             if should_recompile {
                 let start = std::time::Instant::now();
 
-                compiler.compile_pdf(self);
+                compiler.compile_pdf(self)?;
                 self.args.output_format.write_puzzle_to_file(
                     &self.args.output_path,
                     &self.args.puzzle_file_path,

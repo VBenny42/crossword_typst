@@ -64,6 +64,9 @@ pub struct Args {
         help = "Style of PDF to be generated. Can be Normal, Larger or Landscape"
     )]
     pdf_style: PdfStyle,
+
+    #[arg(short, long, action=SetTrue, help = "Connect to fancy-cat socket")]
+    connect_to_socket: bool,
 }
 
 impl Args {

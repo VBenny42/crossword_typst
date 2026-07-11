@@ -1,4 +1,5 @@
-use std::fs;
+use std::io::Write;
+use std::{fs, os::unix::net::UnixStream};
 
 use puz_parse::Puzzle;
 use typst::{
@@ -18,6 +19,8 @@ static TEMPLATE_LARGER_FILE: &str = include_str!("../templates/template-larger.t
 static TEMPLATE_LANDSCAPE_FILE: &str = include_str!("../templates/template-landscape.typ");
 static PDF_OUTPUT_PATH: &str = "./crossword.pdf";
 
+static SOCKET_PATH: &str = "/tmp/fancy-cat.sock";
+
 pub struct PdfCompiler {
     engine: TypstEngine<typst_as_lib::TypstTemplateMainFile>,
 }
@@ -34,7 +37,7 @@ impl PdfCompiler {
         }
     }
 
-    pub fn compile_pdf(&self, state: &PuzzleState) {
+    pub fn compile_pdf(&self, state: &PuzzleState) -> Result<(), Box<dyn std::error::Error>> {
         let inputs: Dict = [
             (
                 "crossword_json".into(),
@@ -69,6 +72,19 @@ impl PdfCompiler {
         let pdf = typst_pdf::pdf(&doc, &PdfOptions::default()).expect("Could not generate pdf");
 
         fs::write(PDF_OUTPUT_PATH, pdf).expect("Could not write pdf");
+
+        if state.args.connect_to_socket {
+            let mut stream = match UnixStream::connect(SOCKET_PATH) {
+                Ok(stream) => stream,
+                Err(e) => {
+                    eprintln!("{e}, continuing without writing to socket.");
+                    return Ok(());
+                }
+            };
+            stream.write_all(b"write")?;
+        }
+
+        Ok(())
     }
 }
 
