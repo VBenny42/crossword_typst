@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::HashSet, error::Error};
+use std::{cmp::Ordering, error::Error};
 
 use crate::{
     puzzle::input,
@@ -174,37 +174,30 @@ impl PuzzleState {
     }
 
     pub(crate) fn update_clues_status(&mut self) {
-        let mut solved_across_clues: HashSet<u8> = HashSet::new();
-        for (clue_num, _) in self.clues_info.across.iter() {
-            let (clue_so_far, solution_word) = self.get_clue_so_far(*clue_num, Direction::Across);
+        let across_clues = self.clues_info.across.keys().copied().collect::<Vec<_>>();
+        for clue_num in across_clues {
+            let (clue_so_far, solution_word) = self.get_clue_so_far(clue_num, Direction::Across);
             if clue_so_far == solution_word {
-                solved_across_clues.insert(*clue_num);
+                let clue_info = self
+                    .clues_info
+                    .across
+                    .get_mut(&clue_num)
+                    .expect("Always going to exist");
+                clue_info.solved = true;
             };
         }
 
-        let mut solved_down_clues: HashSet<u8> = HashSet::new();
-        for (clue_num, _) in self.clues_info.down.iter() {
-            let (clue_so_far, solution_word) = self.get_clue_so_far(*clue_num, Direction::Down);
+        let down_clues = self.clues_info.down.keys().copied().collect::<Vec<_>>();
+        for clue_num in down_clues {
+            let (clue_so_far, solution_word) = self.get_clue_so_far(clue_num, Direction::Down);
             if clue_so_far == solution_word {
-                solved_down_clues.insert(*clue_num);
+                let clue_info = self
+                    .clues_info
+                    .across
+                    .get_mut(&clue_num)
+                    .expect("Always going to exist");
+                clue_info.solved = true;
             };
-        }
-
-        for clue_num in solved_across_clues.iter() {
-            let clue_info = self
-                .clues_info
-                .across
-                .get_mut(clue_num)
-                .expect("Always going to exist");
-            clue_info.solved = true;
-        }
-        for clue_num in solved_down_clues.iter() {
-            let clue_info = self
-                .clues_info
-                .down
-                .get_mut(clue_num)
-                .expect("Always going to exist");
-            clue_info.solved = true;
         }
     }
 }
