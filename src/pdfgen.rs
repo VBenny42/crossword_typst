@@ -12,6 +12,7 @@ use typst_pdf::PdfOptions;
 use crate::puzzle::get_puz_json;
 use crate::types::{CluesInfo, PdfStyle, PuzzleState, BLANK_CELL};
 
+static HELPERS_FILE: &str = include_str!("../templates/helpers.typ");
 static TEMPLATE_NORMAL_FILE: &str = include_str!("../templates/template.typ");
 static TEMPLATE_LARGER_FILE: &str = include_str!("../templates/template-larger.typ");
 static TEMPLATE_LANDSCAPE_FILE: &str = include_str!("../templates/template-landscape.typ");
@@ -26,12 +27,16 @@ pub struct PdfCompiler {
 impl PdfCompiler {
     pub fn new(pdf_style: PdfStyle) -> Self {
         let build = || TypstEngine::builder().search_fonts_with(TypstKitFontOptions::default());
+        let main_file = match pdf_style {
+            PdfStyle::Normal => TEMPLATE_NORMAL_FILE,
+            PdfStyle::Larger => TEMPLATE_LARGER_FILE,
+            PdfStyle::Landscape => TEMPLATE_LANDSCAPE_FILE,
+        };
         Self {
-            engine: match pdf_style {
-                PdfStyle::Normal => build().main_file(TEMPLATE_NORMAL_FILE).build(),
-                PdfStyle::Larger => build().main_file(TEMPLATE_LARGER_FILE).build(),
-                PdfStyle::Landscape => build().main_file(TEMPLATE_LANDSCAPE_FILE).build(),
-            },
+            engine: build()
+                .main_file(main_file)
+                .with_static_source_file_resolver([("helpers.typ", HELPERS_FILE)])
+                .build(),
         }
     }
 

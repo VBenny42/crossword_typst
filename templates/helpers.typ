@@ -14,7 +14,6 @@
     fill: bg,
     inset: 0.5pt,
     {
-      let percent = 0.44
       if percent > 0 {
         box(height: 100%, width: width * percent, fill: fg)
       }
