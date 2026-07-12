@@ -174,17 +174,20 @@ impl PuzzleState {
     }
 
     pub(crate) fn update_clues_status(&mut self) {
-        let across_clues = self.clues_info.across.keys().copied().collect::<Vec<_>>();
-        for clue_num in across_clues {
-            let (clue_so_far, solution_word) = self.get_clue_so_far(clue_num, Direction::Across);
-            if clue_so_far == solution_word {
-                let clue_info = self
-                    .clues_info
-                    .across
-                    .get_mut(&clue_num)
-                    .expect("Always going to exist");
-                clue_info.solved = true;
-            };
+        {
+            let across_clues = self.clues_info.across.keys().copied().collect::<Vec<_>>();
+            for clue_num in across_clues {
+                let (clue_so_far, solution_word) =
+                    self.get_clue_so_far(clue_num, Direction::Across);
+                if clue_so_far == solution_word {
+                    let clue_info = self
+                        .clues_info
+                        .across
+                        .get_mut(&clue_num)
+                        .expect("Always going to exist");
+                    clue_info.solved = true;
+                };
+            }
         }
 
         let down_clues = self.clues_info.down.keys().copied().collect::<Vec<_>>();
@@ -193,7 +196,7 @@ impl PuzzleState {
             if clue_so_far == solution_word {
                 let clue_info = self
                     .clues_info
-                    .across
+                    .down
                     .get_mut(&clue_num)
                     .expect("Always going to exist");
                 clue_info.solved = true;
