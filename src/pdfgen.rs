@@ -83,6 +83,7 @@ impl PdfCompiler {
                     return Ok(());
                 }
             };
+            // Doesn't acc matter what I write, just something
             stream.write_all(b"write")?;
         }
 

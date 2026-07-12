@@ -1,5 +1,7 @@
 #import sys: inputs
 
+#import "helpers.typ"
+
 #set page(paper: "us-letter", flipped: true)
 #set page(margin: (left: 0.25in, right: 0.25in, top: 0.5in, bottom: 0.5in))
 #set text(size: 14pt)
@@ -30,52 +32,6 @@
 
 #let BLANK_CELL = "-"
 #let BLACK_CELL = "."
-
-#let progress(
-  percent,
-  height: 100%,
-  width: 100%,
-  bg: background_color,
-  fg: foreground_color,
-  stroke: 1pt + gray,
-) = {
-  box(
-    height: height,
-    width: width,
-    stroke: stroke,
-    fill: bg,
-    {
-      if percent > 0 {
-        box(height: 100%, width: width * percent, fill: fg)
-      }
-
-      let color = if percent < 0.5 { fg } else { bg }
-      let inverse_color = if percent < 0.5 { bg } else { fg }
-
-      if percent >= 0.44 and percent <= 0.56 {
-        place(
-          center + horizon,
-          text(
-            fill: inverse_color,
-            stroke: 1pt + inverse_color,
-            size: 9pt,
-            weight: "bold",
-            str(int(percent * 100)) + "%",
-          ),
-        )
-      }
-      place(
-        center + horizon,
-        text(
-          fill: color,
-          size: 9pt,
-          weight: "bold",
-          str(int(percent * 100)) + "%",
-        ),
-      )
-    },
-  )
-}
 
 #let crossword(puzzle, clues_info) = {
   let puzzle_grid = puzzle.grid.at("blank")
@@ -175,7 +131,13 @@
       grid(
         columns: (1fr, auto),
         puzzle.info.title,
-        progress(percent_complete / 100, width: 11em, height: 0.7em),
+        helpers.progress(
+          percent_complete / 100,
+          width: 11em,
+          height: 0.7em,
+          fg: foreground_color,
+          bg: background_color,
+        ),
       )
     } else {
       puzzle.info.title
@@ -202,12 +164,12 @@
 
   for clue in sorted_across {
     let clue_num = clue.at(0)
-
-    let clue_coord = coord_to_number.at(clue_num, default: none)
     let word_solved = false
-    let (x, y) = clue_coord
 
     if clues_info == none {
+      let clue_coord = coord_to_number.at(clue_num, default: none)
+      let (x, y) = clue_coord
+
       while x <= puzzle.info.width {
         let next_cell = puzzle_grid.at(y).clusters().at(x)
         if next_cell == BLANK_CELL {
@@ -254,12 +216,12 @@
 
   for clue in sorted_down {
     let clue_num = clue.at(0)
-
-    let clue_coord = coord_to_number.at(clue_num, default: none)
     let word_solved = false
-    let (x, y) = clue_coord
 
     if clues_info == none {
+      let clue_coord = coord_to_number.at(clue_num, default: none)
+      let (x, y) = clue_coord
+
       while y <= puzzle.info.height {
         let next_cell = puzzle_grid.at(y).clusters().at(x)
         if next_cell == BLANK_CELL {
