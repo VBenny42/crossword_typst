@@ -21,7 +21,7 @@
       let color = if percent < 0.5 { fg } else { bg }
       let inverse_color = if percent < 0.5 { bg } else { fg }
 
-      if percent >= 0.44 and percent <= 0.56 {
+      if percent >= 0.43 and percent <= 0.56 {
         place(
           center + horizon,
           text(
