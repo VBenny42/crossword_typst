@@ -162,9 +162,19 @@
   let across_clues_array = ()
   let down_clues_array = ()
 
+  let stars_exist = false
+  let star_spots = (:)
+
   for clue in sorted_across {
     let clue_num = clue.at(0)
     let word_solved = false
+
+    let has_star = clue.at(1).starts-with("*")
+    if has_star {
+      stars_exist = true
+      let (x, y) = coord_to_number.at(clue_num)
+      star_spots.insert(str(x) + "," + str(y), true)
+    }
 
     if clues_info == none {
       let clue_coord = coord_to_number.at(clue_num, default: none)
@@ -217,6 +227,13 @@
   for clue in sorted_down {
     let clue_num = clue.at(0)
     let word_solved = false
+
+    let has_star = clue.at(1).starts-with("*")
+    if has_star {
+      stars_exist = true
+      let (x, y) = coord_to_number.at(clue_num)
+      star_spots.insert(str(x) + "," + str(y), true)
+    }
 
     if clues_info == none {
       let clue_coord = coord_to_number.at(clue_num, default: none)
@@ -384,6 +401,16 @@
                             text(
                               size: box_unit * 0.20,
                               str(num),
+                            ),
+                          )
+                        }
+                        if stars_exist and star_spots.at(key, default: false) {
+                          place(
+                            top + right,
+                            dx: -box_unit * 0.05,
+                            text(
+                              size: box_unit * 0.30,
+                              sym.star.filled,
                             ),
                           )
                         }
