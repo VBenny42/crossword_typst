@@ -2,7 +2,7 @@ use std::{cmp::Ordering, error::Error};
 
 use crate::{
     puzzle::input,
-    types::{ClueInfo, CluesInfo, Direction, PuzzleState},
+    types::{ClueInfo, CluesInfo, Direction, PuzzleState, BLANK_CELL},
 };
 
 impl CluesInfo {
@@ -125,6 +125,19 @@ impl PuzzleState {
         }
 
         if let Some(guess) = guess {
+            // Guess can possibly be interweaved to get the an actual guess if it is less than the
+            // needed length
+            match (
+                a_word_so_far.chars().filter(|c| *c == BLANK_CELL).count() == guess.len(),
+                d_word_so_far.chars().filter(|c| *c == BLANK_CELL).count() == guess.len(),
+            ) {
+                (true, false) => return Ok((Direction::Across, a_clue)),
+                (false, true) => return Ok((Direction::Down, d_clue)),
+                _ => {
+                    // Proceed to check for length and closeness
+                }
+            };
+
             match (guess.len() == a_clue.length, guess.len() == d_clue.length) {
                 (true, false) => return Ok((Direction::Across, a_clue)),
                 (false, true) => return Ok((Direction::Down, d_clue)),
@@ -200,4 +213,24 @@ impl PuzzleState {
             };
         }
     }
+}
+
+pub(crate) fn interweave_guess(word_so_far: &str, guess: &str) -> String {
+    let mut interweaved = String::new();
+
+    let mut guess_iter = guess.chars();
+
+    for ch in word_so_far.chars() {
+        if ch == BLANK_CELL {
+            interweaved.push(
+                guess_iter
+                    .next()
+                    .expect("guess length should be the same count as the blank cells"),
+            );
+        } else {
+            interweaved.push(ch);
+        }
+    }
+
+    interweaved
 }

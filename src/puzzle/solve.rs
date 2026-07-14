@@ -1,6 +1,7 @@
 use std::error::Error;
 
 use crate::pdfgen::PdfCompiler;
+use crate::puzzle::clues::interweave_guess;
 use crate::puzzle::input;
 use crate::types::{Direction, PuzzleState, BLACK_CELL, BLANK_CELL};
 
@@ -246,12 +247,16 @@ impl PuzzleState {
         };
 
         if guess.len() != clue_info.length {
-            return Err(format!(
+            if word_so_far.chars().filter(|c| *c == BLANK_CELL).count() == guess.len() {
+                guess = interweave_guess(&word_so_far, &guess);
+            } else {
+                return Err(format!(
                 "Your guess must be {} characters long. Please try again. Your guess length: {}",
                 clue_info.length,
                 guess.len()
             )
-            .into());
+                .into());
+            }
         }
 
         if guess
