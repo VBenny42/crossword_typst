@@ -280,38 +280,39 @@
                   stroke: (paint: foreground_color, thickness: 1pt),
 
                   {
-                    if cell != BLACK_CELL {
-                      place(
-                        horizon + center,
-                        text(weight: "medium", size: box_unit * 0.625, if cell
-                          == BLANK_CELL {
-                          ""
-                        } else {
-                          cell
-                        }),
-                      )
-                      if puzzle.extensions.circles != none {
-                        if puzzle.extensions.circles.at(y).at(x) {
-                          place(center + horizon, circle(
-                            radius: (box_unit / 2) - 1pt,
-                            stroke: (
-                              paint: foreground_color.lighten(60%),
-                              dash: "densely-dotted",
-                            ),
-                          ))
-                        }
-                      }
-                      if num != none {
-                        place(
-                          top + left,
-                          dx: box_unit * 0.05,
-                          dy: box_unit * 0.05,
-                          text(
-                            size: box_unit * 0.20,
-                            str(num),
+                    if cell == BLACK_CELL {
+                      continue
+                    }
+                    place(
+                      horizon + center,
+                      text(weight: "medium", size: box_unit * 0.625, if cell
+                        == BLANK_CELL {
+                        ""
+                      } else {
+                        cell
+                      }),
+                    )
+                    if puzzle.extensions.circles != none {
+                      if puzzle.extensions.circles.at(y).at(x) {
+                        place(center + horizon, circle(
+                          radius: (box_unit / 2) - 1pt,
+                          stroke: (
+                            paint: foreground_color.lighten(60%),
+                            dash: "densely-dotted",
                           ),
-                        )
+                        ))
                       }
+                    }
+                    if num != none {
+                      place(
+                        top + left,
+                        dx: box_unit * 0.05,
+                        dy: box_unit * 0.05,
+                        text(
+                          size: box_unit * 0.20,
+                          str(num),
+                        ),
+                      )
                     }
                   },
                 ),
