@@ -138,7 +138,14 @@ impl PuzzleState {
                 }
             };
 
-            match (guess.len() == a_clue.length, guess.len() == d_clue.length) {
+            // Use interweaved guesses once they are both valid
+            let across_interweaved = interweave_guess(&a_word_so_far, guess);
+            let down_interweaved = interweave_guess(&d_word_so_far, guess);
+
+            match (
+                across_interweaved.len() == a_clue.length,
+                down_interweaved.len() == d_clue.length,
+            ) {
                 (true, false) => return Ok((Direction::Across, a_clue)),
                 (false, true) => return Ok((Direction::Down, d_clue)),
                 (false, false) => {
@@ -152,12 +159,12 @@ impl PuzzleState {
                 }
             }
 
-            let across_closeness = guess
+            let across_closeness = across_interweaved
                 .chars()
                 .zip(a_solution_word.chars())
                 .filter(|(guess, solution)| guess.eq_ignore_ascii_case(solution))
                 .count();
-            let down_closeness = guess
+            let down_closeness = down_interweaved
                 .chars()
                 .zip(d_solution_word.chars())
                 .filter(|(guess, solution)| guess.eq_ignore_ascii_case(solution))
