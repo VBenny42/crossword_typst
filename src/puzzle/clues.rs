@@ -120,51 +120,61 @@ impl PuzzleState {
             (false, true) => return Ok((Direction::Across, a_clue)),
             (true, true) => return Err("Both across and down clues are already solved.".into()),
             (false, false) => {
-                // Move onto comparing clue lengths
+                // Move onto checking actual guess
             }
         }
 
         if let Some(guess) = guess {
+            let a_interweave_count =
+                a_word_so_far.chars().filter(|c| *c == BLANK_CELL).count() == guess.len();
+            let d_interweave_count =
+                d_word_so_far.chars().filter(|c| *c == BLANK_CELL).count() == guess.len();
+
+            let mut a_guess = String::from(guess);
+            let mut d_guess = String::from(guess);
+
             // Guess can possibly be interweaved to get the an actual guess if it is less than the
             // needed length
-            match (
-                a_word_so_far.chars().filter(|c| *c == BLANK_CELL).count() == guess.len(),
-                d_word_so_far.chars().filter(|c| *c == BLANK_CELL).count() == guess.len(),
-            ) {
+            match (a_interweave_count, d_interweave_count) {
                 (true, false) => return Ok((Direction::Across, a_clue)),
                 (false, true) => return Ok((Direction::Down, d_clue)),
-                _ => {
-                    // Proceed to check for length and closeness
+                (false, false) => {
+                    // Move on, but don't modify a_guess or d_guess,
+                    // since they can't be interweaved
+                }
+                (true, true) => {
+                    // Check for closeness
+                    // Use interweaved guesses once they both have same length
+                    a_guess = interweave_guess(&a_word_so_far, guess);
+                    d_guess = interweave_guess(&d_word_so_far, guess);
                 }
             };
 
-            // Use interweaved guesses once they are both valid
-            let across_interweaved = interweave_guess(&a_word_so_far, guess);
-            let down_interweaved = interweave_guess(&d_word_so_far, guess);
-
             match (
-                across_interweaved.len() == a_clue.length,
-                down_interweaved.len() == d_clue.length,
+                a_guess.len() == a_clue.length,
+                d_guess.len() == d_clue.length,
             ) {
                 (true, false) => return Ok((Direction::Across, a_clue)),
                 (false, true) => return Ok((Direction::Down, d_clue)),
                 (false, false) => {
-                    return Err(
-                        "Your guess does not match the length of either across or down clues."
-                            .into(),
-                    )
+                    if !a_interweave_count && !d_interweave_count {
+                        return Err(
+                            "Your guess does not match the length of either across or down clues."
+                                .into(),
+                        );
+                    }
                 }
                 (true, true) => {
                     // Check which one is closer to the actual answer
                 }
             }
 
-            let across_closeness = across_interweaved
+            let across_closeness = a_guess
                 .chars()
                 .zip(a_solution_word.chars())
                 .filter(|(guess, solution)| guess.eq_ignore_ascii_case(solution))
                 .count();
-            let down_closeness = down_interweaved
+            let down_closeness = d_guess
                 .chars()
                 .zip(d_solution_word.chars())
                 .filter(|(guess, solution)| guess.eq_ignore_ascii_case(solution))
