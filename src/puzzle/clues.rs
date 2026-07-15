@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, error::Error};
+use std::{borrow::Cow, cmp::Ordering, error::Error};
 
 use crate::{
     puzzle::input,
@@ -106,8 +106,8 @@ impl PuzzleState {
             }
         }
 
-        let a_clue = across_clue.unwrap();
-        let d_clue = down_clue.unwrap();
+        let a_clue = across_clue.expect("Across clue should be Some by this point");
+        let d_clue = down_clue.expect("Down clue should be Some by this point");
 
         let (a_word_so_far, a_solution_word) = self.get_clue_so_far(number, Direction::Across);
         let (d_word_so_far, d_solution_word) = self.get_clue_so_far(number, Direction::Down);
@@ -130,8 +130,8 @@ impl PuzzleState {
             let d_interweave_count =
                 d_word_so_far.chars().filter(|c| *c == BLANK_CELL).count() == guess.len();
 
-            let mut a_guess = String::from(guess);
-            let mut d_guess = String::from(guess);
+            let mut a_guess: Cow<str> = Cow::Borrowed(guess);
+            let mut d_guess: Cow<str> = Cow::Borrowed(guess);
 
             // Guess can possibly be interweaved to get the an actual guess if it is less than the
             // needed length
@@ -145,8 +145,8 @@ impl PuzzleState {
                 (true, true) => {
                     // Check for closeness
                     // Use interweaved guesses once they both have same length
-                    a_guess = interweave_guess(&a_word_so_far, guess);
-                    d_guess = interweave_guess(&d_word_so_far, guess);
+                    a_guess = Cow::Owned(interweave_guess(&a_word_so_far, guess));
+                    d_guess = Cow::Owned(interweave_guess(&d_word_so_far, guess));
                 }
             };
 
