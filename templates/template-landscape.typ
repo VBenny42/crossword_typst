@@ -411,9 +411,10 @@
                         place(
                           top + right,
                           dx: -box_unit * 0.05,
+                          dy: box_unit * 0.05,
                           text(
-                            size: box_unit * 0.30,
-                            sym.star.filled,
+                            size: box_unit * 0.50,
+                            "*",
                           ),
                         )
                       }
