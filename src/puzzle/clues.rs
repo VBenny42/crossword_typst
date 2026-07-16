@@ -39,7 +39,11 @@ impl PuzzleState {
         Some((clue_number, guess))
     }
 
-    pub(crate) fn get_clue_so_far(&self, number: u8, direction: Direction) -> (String, String) {
+    pub(crate) fn get_clue_so_far(
+        &self,
+        number: u8,
+        direction: Direction,
+    ) -> (Cow<'_, str>, Cow<'_, str>) {
         let clue_info = match direction {
             Direction::Across => self
                 .clues_info
@@ -55,10 +59,10 @@ impl PuzzleState {
                 .unwrap(),
         };
 
-        let word_so_far: String = match direction {
-            Direction::Across => self.puzzle.grid.blank[clue_info.y]
-                [clue_info.x..(clue_info.x + clue_info.length)]
-                .to_string(),
+        let word_so_far: Cow<'_, str> = match direction {
+            Direction::Across => Cow::Borrowed(
+                &self.puzzle.grid.blank[clue_info.y][clue_info.x..(clue_info.x + clue_info.length)],
+            ),
             Direction::Down => self
                 .puzzle
                 .grid
@@ -69,10 +73,11 @@ impl PuzzleState {
                 .map(|row| row.as_bytes()[clue_info.x] as char)
                 .collect(),
         };
-        let solution_word: String = match direction {
-            Direction::Across => self.puzzle.grid.solution[clue_info.y]
-                [clue_info.x..(clue_info.x + clue_info.length)]
-                .to_string(),
+        let solution_word: Cow<'_, str> = match direction {
+            Direction::Across => Cow::Borrowed(
+                &self.puzzle.grid.solution[clue_info.y]
+                    [clue_info.x..(clue_info.x + clue_info.length)],
+            ),
             Direction::Down => self
                 .puzzle
                 .grid
@@ -163,6 +168,7 @@ impl PuzzleState {
                                 .into(),
                         );
                     }
+                    // Continue to check for closeness
                 }
                 (true, true) => {
                     // Check which one is closer to the actual answer
