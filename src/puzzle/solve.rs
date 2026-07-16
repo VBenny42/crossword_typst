@@ -39,6 +39,14 @@ macro_rules! solve_clue_input {
     };
 }
 
+#[derive(Default)]
+struct LastSolve {
+    clue_number: u8,
+    direction: Direction,
+    max_length: usize,
+    set: bool,
+}
+
 impl PuzzleState {
     pub fn solve_puzzle(&mut self) -> Result<(), Box<dyn Error>> {
         let mut should_recompile = false;
@@ -48,10 +56,13 @@ impl PuzzleState {
         self.update_clues_status();
         compiler.compile_pdf(self)?;
 
-        println!("Can solve clues by entering the clue number followed by your guess, e.g., `<CLUENUMBER> <ANSWER>`.");
+        println!("Can solve clues by entering the clue number followed by your guess, e.g., `<CLUENUMBER> <GUESS>`.");
         println!("Can also pick a clue to solve by entering the clue number on its own, e.g., `<CLUENUMBER>`, and then entering your guess when prompted.");
         println!("This only works if the clue is not any number between 1 and 8, which are reserved for the menu options.");
         println!("Can also reveal a clue by entering the clue number followed by your guess, e.g., `7 <CLUENUMBER>`.");
+        println!("Can also type the guess for last solved clue and the solver will try and use it, e.g. `<GUESS>`.");
+
+        let mut last_solve = LastSolve::default();
 
         loop {
             if self.puzzle.grid.blank == self.puzzle.grid.solution {
@@ -148,10 +159,15 @@ impl PuzzleState {
                     break;
                 }
                 s if let Some((clue_number, guess)) = self.parse_clue_input(s) => {
-                    let (direction, _) = try_or_continue!(
+                    let (direction, clue_info) = try_or_continue!(
                         self.select_clue(clue_number, guess),
                         "Error picking clue direction:"
                     );
+
+                    last_solve.set = true;
+                    last_solve.clue_number = clue_number;
+                    last_solve.max_length = clue_info.length;
+                    last_solve.direction = direction;
 
                     try_or_continue!(self.solve_clue(clue_number, direction, guess), "Solve:");
 
@@ -167,6 +183,24 @@ impl PuzzleState {
                         self.reveal_clue_answer(clue_number),
                         "Error revealing clue:"
                     );
+
+                    should_recompile = true;
+                }
+                s if s.is_ascii() && last_solve.set && s.len() <= last_solve.max_length => {
+                    // Just need to check if length is less than last clue's total length
+                    // solve_clue will error out if it's bad input
+                    // The ascii check is just nice sanity check
+                    try_or_continue!(
+                        self.solve_clue(last_solve.clue_number, last_solve.direction, Some(s)),
+                        "Solve retry:"
+                    );
+
+                    let (word_so_far, _) =
+                        self.get_clue_so_far(last_solve.clue_number, last_solve.direction);
+                    let any_blanks = word_so_far.chars().any(|c| c == BLANK_CELL);
+
+                    // If there any blanks left after solve, the last solve should still be set
+                    last_solve.set = any_blanks;
 
                     should_recompile = true;
                 }

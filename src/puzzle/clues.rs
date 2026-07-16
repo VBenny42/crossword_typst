@@ -153,7 +153,7 @@ impl PuzzleState {
                     a_guess = Cow::Owned(interweave_guess(&a_word_so_far, guess));
                     d_guess = Cow::Owned(interweave_guess(&d_word_so_far, guess));
                 }
-            };
+            }
 
             match (
                 a_guess.len() == a_clue.length,
@@ -220,7 +220,7 @@ impl PuzzleState {
                     .get_mut(&clue_num)
                     .expect("Always going to exist");
                 clue_info.solved = true;
-            };
+            }
         }
 
         let down_clues = self.clues_info.down.keys().copied().collect::<Vec<_>>();
@@ -238,7 +238,7 @@ impl PuzzleState {
     }
 }
 
-pub(crate) fn interweave_guess(word_so_far: &str, guess: &str) -> String {
+pub fn interweave_guess(word_so_far: &str, guess: &str) -> String {
     let mut interweaved = String::new();
 
     let mut guess_iter = guess.chars();
