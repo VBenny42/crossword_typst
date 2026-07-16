@@ -49,7 +49,7 @@ struct LastSolve {
     clue_number: u8,
     direction: Direction,
     max_length: usize,
-    set: bool,
+    not_solved: bool,
 }
 
 impl PuzzleState {
@@ -169,7 +169,7 @@ impl PuzzleState {
                         "Error picking clue direction:"
                     );
 
-                    last_solve.set = true;
+                    last_solve.not_solved = true;
                     last_solve.clue_number = clue_number;
                     last_solve.max_length = clue_info.length;
                     last_solve.direction = direction;
@@ -191,7 +191,7 @@ impl PuzzleState {
 
                     should_recompile = true;
                 }
-                s if s.is_ascii() && last_solve.set && s.len() <= last_solve.max_length => {
+                s if s.is_ascii() && last_solve.not_solved && s.len() <= last_solve.max_length => {
                     // Just need to check if length is less than last clue's total length
                     // solve_clue will error out if it's bad input
                     // The ascii check is just nice sanity check
@@ -201,7 +201,7 @@ impl PuzzleState {
                     );
 
                     // If there any blanks left after solve, the last solve should still be set
-                    last_solve.set =
+                    last_solve.not_solved =
                         !self.is_clue_solved(last_solve.clue_number, last_solve.direction);
 
                     should_recompile = true;
