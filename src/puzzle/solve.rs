@@ -25,10 +25,15 @@ macro_rules! solve_clue_input {
 
         let mut split = input_string.split_whitespace();
 
+        let number = split.next();
+        if number.is_none() {
+            println!("Expected at least one word");
+            continue;
+        }
+
         let clue_number = try_or_continue!(
-            split
-                .next()
-                .expect("Expected at least one word")
+            number
+                .expect("number is guaranteed to be Some")
                 .parse::<u8>(),
             "Invalid input, please enter a number. Error:"
         );
