@@ -39,6 +39,52 @@ impl PuzzleState {
         Some((clue_number, guess))
     }
 
+    pub(crate) fn is_clue_solved(&self, number: u8, direction: Direction) -> bool {
+        let clue_info = match direction {
+            Direction::Across => self
+                .clues_info
+                .across
+                .get(&number)
+                .expect("Clue number not found in across clues"),
+            Direction::Down => self
+                .clues_info
+                .down
+                .get(&number)
+                .expect("Clue number not found in down clues"),
+        };
+
+        // TODO: Does this lazily consume the elements?
+        match direction {
+            Direction::Across => self.puzzle.grid.blank[clue_info.y]
+                [clue_info.x..(clue_info.x + clue_info.length)]
+                .chars()
+                .zip(
+                    self.puzzle.grid.solution[clue_info.y]
+                        [clue_info.x..(clue_info.x + clue_info.length)]
+                        .chars(),
+                )
+                .all(|(blank_char, solution_char)| blank_char == solution_char),
+            Direction::Down => self
+                .puzzle
+                .grid
+                .blank
+                .iter()
+                .skip(clue_info.y)
+                .take(clue_info.length)
+                .map(|row| row.as_bytes()[clue_info.x] as char)
+                .zip(
+                    self.puzzle
+                        .grid
+                        .solution
+                        .iter()
+                        .skip(clue_info.y)
+                        .take(clue_info.length)
+                        .map(|row| row.as_bytes()[clue_info.x] as char),
+                )
+                .all(|(blank_char, solution_char)| blank_char == solution_char),
+        }
+    }
+
     pub(crate) fn get_clue_so_far(
         &self,
         number: u8,
@@ -49,14 +95,12 @@ impl PuzzleState {
                 .clues_info
                 .across
                 .get(&number)
-                .ok_or("Clue number not found in across clues")
-                .unwrap(),
+                .expect("Clue number not found in across clues"),
             Direction::Down => self
                 .clues_info
                 .down
                 .get(&number)
-                .ok_or("Clue number not found in down clues")
-                .unwrap(),
+                .expect("Clue number not found in down clues"),
         };
 
         let word_so_far: Cow<'_, str> = match direction {
@@ -114,13 +158,10 @@ impl PuzzleState {
         let a_clue = across_clue.expect("Across clue should be Some by this point");
         let d_clue = down_clue.expect("Down clue should be Some by this point");
 
-        let (a_word_so_far, a_solution_word) = self.get_clue_so_far(number, Direction::Across);
-        let (d_word_so_far, d_solution_word) = self.get_clue_so_far(number, Direction::Down);
+        let across_clue_solved = self.is_clue_solved(number, Direction::Across);
+        let down_clue_solved = self.is_clue_solved(number, Direction::Down);
 
-        match (
-            a_word_so_far == a_solution_word,
-            d_word_so_far == d_solution_word,
-        ) {
+        match (across_clue_solved, down_clue_solved) {
             (true, false) => return Ok((Direction::Down, d_clue)),
             (false, true) => return Ok((Direction::Across, a_clue)),
             (true, true) => return Err("Both across and down clues are already solved.".into()),
@@ -130,6 +171,9 @@ impl PuzzleState {
         }
 
         if let Some(guess) = guess {
+            let (a_word_so_far, a_solution_word) = self.get_clue_so_far(number, Direction::Across);
+            let (d_word_so_far, d_solution_word) = self.get_clue_so_far(number, Direction::Down);
+
             let a_interweave_count =
                 a_word_so_far.chars().filter(|c| *c == BLANK_CELL).count() == guess.len();
             let d_interweave_count =
@@ -212,8 +256,7 @@ impl PuzzleState {
     pub(crate) fn update_clues_status(&mut self) {
         let across_clues = self.clues_info.across.keys().copied().collect::<Vec<_>>();
         for clue_num in across_clues {
-            let (clue_so_far, solution_word) = self.get_clue_so_far(clue_num, Direction::Across);
-            if clue_so_far == solution_word {
+            if self.is_clue_solved(clue_num, Direction::Across) {
                 let clue_info = self
                     .clues_info
                     .across
@@ -225,8 +268,7 @@ impl PuzzleState {
 
         let down_clues = self.clues_info.down.keys().copied().collect::<Vec<_>>();
         for clue_num in down_clues {
-            let (clue_so_far, solution_word) = self.get_clue_so_far(clue_num, Direction::Down);
-            if clue_so_far == solution_word {
+            if self.is_clue_solved(clue_num, Direction::Down) {
                 let clue_info = self
                     .clues_info
                     .down

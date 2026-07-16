@@ -195,12 +195,9 @@ impl PuzzleState {
                         "Solve retry:"
                     );
 
-                    let (word_so_far, _) =
-                        self.get_clue_so_far(last_solve.clue_number, last_solve.direction);
-                    let any_blanks = word_so_far.chars().any(|c| c == BLANK_CELL);
-
                     // If there any blanks left after solve, the last solve should still be set
-                    last_solve.set = any_blanks;
+                    last_solve.set =
+                        !self.is_clue_solved(last_solve.clue_number, last_solve.direction);
 
                     should_recompile = true;
                 }
