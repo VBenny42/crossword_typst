@@ -89,6 +89,17 @@ fn initialize_puzzle(file_path: &PathBuf) -> Result<Puzzle, Box<dyn Error>> {
         println!("Warning: {warning}");
     }
 
+    if result
+        .result
+        .grid
+        .solution
+        .iter()
+        .any(|row| !row.is_ascii())
+        || result.result.grid.blank.iter().any(|row| !row.is_ascii())
+    {
+        return Err("This puzzle contains non-ascii bytes, not supported.".into());
+    }
+
     Ok(result.result)
 }
 
