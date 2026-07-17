@@ -200,10 +200,6 @@ impl PuzzleState {
                         "Solve retry:"
                     );
 
-                    // If there any blanks left after solve, the last solve should still be set
-                    last_solve.not_solved =
-                        !self.is_clue_solved(last_solve.clue_number, last_solve.direction);
-
                     should_recompile = true;
                 }
                 s => println!("Invalid choice, please try again. {s}"),
@@ -213,6 +209,13 @@ impl PuzzleState {
                 let start = std::time::Instant::now();
 
                 self.update_clues_status();
+
+                // If there any blanks left after solve, the last solve should still be set
+                last_solve.not_solved = !self
+                    .clues_info
+                    .get_clue_info(last_solve.clue_number, last_solve.direction)
+                    .expect("last_solve would always have valid clue_info")
+                    .solved;
 
                 compiler.compile_pdf(self)?;
                 self.args.output_format.write_puzzle_to_file(

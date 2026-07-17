@@ -9,6 +9,13 @@ impl CluesInfo {
     pub fn get_clues_json(&self) -> Result<String, serde_json::Error> {
         serde_json::to_string(&self)
     }
+
+    pub fn get_clue_info(&self, clue_number: u8, direction: Direction) -> Option<&ClueInfo> {
+        match direction {
+            Direction::Across => self.across.get(&clue_number),
+            Direction::Down => self.down.get(&clue_number),
+        }
+    }
 }
 
 impl PuzzleState {
