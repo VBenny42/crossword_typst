@@ -192,7 +192,7 @@ impl PuzzleState {
                     should_recompile = true;
                 }
                 s if s.is_ascii() && last_solve.not_solved && s.len() <= last_solve.max_length => {
-                    // Just need to check if length is less than last clue's total length
+                    // The length check is actually not even needed
                     // solve_clue will error out if it's bad input
                     // The ascii check is just nice sanity check
                     try_or_continue!(

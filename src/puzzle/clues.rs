@@ -53,7 +53,6 @@ impl PuzzleState {
                 .expect("Clue number not found in down clues"),
         };
 
-        // TODO: Does this lazily consume the elements?
         match direction {
             Direction::Across => self.puzzle.grid.blank[clue_info.y]
                 [clue_info.x..(clue_info.x + clue_info.length)]
@@ -103,7 +102,7 @@ impl PuzzleState {
                 .expect("Clue number not found in down clues"),
         };
 
-        let word_so_far: Cow<'_, str> = match direction {
+        let mut word_so_far: Cow<'_, str> = match direction {
             Direction::Across => Cow::Borrowed(
                 &self.puzzle.grid.blank[clue_info.y][clue_info.x..(clue_info.x + clue_info.length)],
             ),
@@ -132,6 +131,24 @@ impl PuzzleState {
                 .map(|row| row.as_bytes()[clue_info.x] as char)
                 .collect(),
         };
+
+        let mut changed = false;
+        let mapped_to_blank = word_so_far
+            .chars()
+            .zip(solution_word.chars())
+            .map(|(wsf, sw)| {
+                if wsf != sw && wsf != BLANK_CELL {
+                    changed = true;
+                    BLANK_CELL
+                } else {
+                    wsf
+                }
+            })
+            .collect();
+
+        if changed {
+            word_so_far = mapped_to_blank;
+        }
 
         (word_so_far, solution_word)
     }
@@ -283,12 +300,12 @@ impl PuzzleState {
 pub fn interweave_guess(word_so_far: &str, guess: &str) -> String {
     let mut interweaved = String::new();
 
-    let mut guess_iter = guess.chars();
+    let mut guess = guess.chars();
 
     for ch in word_so_far.chars() {
         if ch == BLANK_CELL {
             interweaved.push(
-                guess_iter
+                guess
                     .next()
                     .expect("guess length should be the same count as the blank cells"),
             );
