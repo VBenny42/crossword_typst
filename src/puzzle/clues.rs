@@ -287,6 +287,20 @@ impl PuzzleState {
                     .get_mut(&clue_num)
                     .expect("Always going to exist");
                 clue_info.solved = true;
+                // Should reset to false if not actually solved but marked as solved
+            } else if self
+                .clues_info
+                .across
+                .get(&clue_num)
+                .expect("Will always exist")
+                .solved
+            {
+                let clue_info = self
+                    .clues_info
+                    .across
+                    .get_mut(&clue_num)
+                    .expect("Always going to exist");
+                clue_info.solved = false;
             }
         }
 
@@ -299,7 +313,20 @@ impl PuzzleState {
                     .get_mut(&clue_num)
                     .expect("Always going to exist");
                 clue_info.solved = true;
-            };
+            } else if self
+                .clues_info
+                .down
+                .get(&clue_num)
+                .expect("Will always exist")
+                .solved
+            {
+                let clue_info = self
+                    .clues_info
+                    .down
+                    .get_mut(&clue_num)
+                    .expect("Always going to exist");
+                clue_info.solved = false;
+            }
         }
     }
 }

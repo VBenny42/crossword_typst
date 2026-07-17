@@ -44,12 +44,22 @@ macro_rules! solve_clue_input {
     };
 }
 
-#[derive(Default)]
 struct LastSolve {
     clue_number: u8,
     direction: Direction,
     max_length: usize,
     not_solved: bool,
+}
+
+impl Default for LastSolve {
+    fn default() -> Self {
+        Self {
+            clue_number: 1,
+            direction: Direction::Across,
+            max_length: Default::default(),
+            not_solved: Default::default(),
+        }
+    }
 }
 
 impl PuzzleState {
