@@ -277,7 +277,9 @@ impl PuzzleState {
         }
     }
 
-    pub(crate) fn update_clues_status(&mut self) {
+    pub(crate) fn update_clues_status(&mut self, new_solves: &mut Vec<(u8, Direction)>) {
+        new_solves.clear();
+
         let across_clues = self.clues_info.across.keys().copied().collect::<Vec<_>>();
         for clue_num in across_clues {
             if self.is_clue_solved(clue_num, Direction::Across) {
@@ -286,7 +288,11 @@ impl PuzzleState {
                     .across
                     .get_mut(&clue_num)
                     .expect("Always going to exist");
-                clue_info.solved = true;
+                if !clue_info.solved {
+                    // New solve
+                    clue_info.solved = true;
+                    new_solves.push((clue_num, Direction::Across));
+                }
                 // Should reset to false if not actually solved but marked as solved
             } else if self
                 .clues_info
@@ -312,7 +318,11 @@ impl PuzzleState {
                     .down
                     .get_mut(&clue_num)
                     .expect("Always going to exist");
-                clue_info.solved = true;
+                if !clue_info.solved {
+                    // New solve
+                    clue_info.solved = true;
+                    new_solves.push((clue_num, Direction::Down));
+                }
             } else if self
                 .clues_info
                 .down

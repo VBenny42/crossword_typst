@@ -13,3 +13,4 @@ serde = "1.0.228"
 typst = "0.14.2"
 typst-as-lib = { version = "0.15.5", features = ["typst-kit-fonts"] }
 typst-pdf = "0.14.2"
+itertools = "0.15.0"

@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use std::error::Error;
 
 use crate::pdfgen::PdfCompiler;
@@ -68,7 +69,9 @@ impl PuzzleState {
 
         let compiler = PdfCompiler::new(self.args.pdf_style);
 
-        self.update_clues_status();
+        let mut new_solves = Vec::new();
+        self.update_clues_status(&mut new_solves);
+
         compiler.compile_pdf(self)?;
 
         println!("Can solve clues by entering the clue number followed by your guess, e.g., `<CLUENUMBER> <GUESS>`.");
@@ -80,6 +83,26 @@ impl PuzzleState {
         let mut last_solve = LastSolve::default();
 
         loop {
+            if !new_solves.is_empty() {
+                println!(
+                    "Solved: {}",
+                    new_solves
+                        .iter()
+                        .map(|(clue_num, direction)| format!("{clue_num}-{direction}"))
+                        .join(", ")
+                );
+                // update_clues_status also clears the vec,
+                // This clear is to take care of when a guess causes an error
+                // and the loop continues without update_clues_status getting called
+                new_solves.clear();
+                // After the first pass, all the initial solved clues show up,
+                // But after that only a few clues would be solved at once
+                if new_solves.capacity() >= 10 {
+                    println!("Shrinking");
+                    new_solves.shrink_to(5);
+                }
+            }
+
             if self.puzzle.grid.blank == self.puzzle.grid.solution {
                 println!("Congratulations! You've solved the puzzle!");
                 break;
@@ -110,6 +133,18 @@ impl PuzzleState {
                     should_recompile = true;
                 }
                 "3" => {
+                    println!("Are you sure you want to overwrite the puzzle? y/n");
+                    match input::<String>()?.trim() {
+                        "y" => {}
+                        "n" => {
+                            println!("Cancelling overwrite.");
+                            continue;
+                        }
+                        _ => {
+                            println!("Invalid input. Cancelling overwrite.");
+                            continue;
+                        }
+                    }
                     println!("Overwriting file with blank puzzle data...");
                     let blank_puzzle_grid = self
                         .puzzle
@@ -218,7 +253,7 @@ impl PuzzleState {
             if should_recompile {
                 let start = std::time::Instant::now();
 
-                self.update_clues_status();
+                self.update_clues_status(&mut new_solves);
 
                 // If there any blanks left after solve, the last solve should still be set
                 last_solve.not_solved = !self
