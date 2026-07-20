@@ -54,14 +54,21 @@
   let filled_cells = 0
   let all_cells = 0
 
+  let is_new_solve = (:)
+
   if clues_info != none {
     for (num, info) in clues_info.at("across").pairs() {
       number_to_coord.insert(str(info.x) + "," + str(info.y), num)
       coord_to_number.insert(num, (info.x, info.y))
+      is_new_solve.insert(num, info.new_solve)
     }
     for (num, info) in clues_info.at("down").pairs() {
       number_to_coord.insert(str(info.x) + "," + str(info.y), num)
       coord_to_number.insert(num, (info.x, info.y))
+      is_new_solve.insert(
+        num,
+        is_new_solve.at(num, default: false) or info.new_solve,
+      )
     }
   }
 
@@ -397,12 +404,26 @@
                         }
                       }
                       if num != none {
+                        let (style, weight) = if (
+                          is_new_solve.at(
+                            num,
+                            default: false,
+                          )
+                            and not is_finished
+                        ) {
+                          ("italic", "bold")
+                        } else {
+                          ("normal", "regular")
+                        }
+
                         place(
                           top + left,
                           dx: box_unit * 0.05,
                           dy: box_unit * 0.05,
                           text(
                             size: box_unit * 0.20,
+                            style: style,
+                            weight: weight,
                             str(num),
                           ),
                         )

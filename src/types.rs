@@ -19,6 +19,7 @@ pub struct ClueInfo {
     pub y: usize,
 
     pub solved: bool,
+    pub new_solve: bool,
 }
 
 #[derive(Debug, Serialize)]

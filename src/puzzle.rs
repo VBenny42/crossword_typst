@@ -163,6 +163,7 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                         y,
 
                         solved: false,
+                        new_solve: false,
                     },
                 );
             }
@@ -201,6 +202,7 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                         y,
 
                         solved: false,
+                        new_solve: false,
                     },
                 );
             }

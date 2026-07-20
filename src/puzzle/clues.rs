@@ -298,7 +298,10 @@ impl PuzzleState {
                 if !clue_info.solved {
                     // New solve
                     clue_info.solved = true;
+                    clue_info.new_solve = true;
                     new_solves.push((*clue_num, Direction::Across));
+                } else {
+                    clue_info.new_solve = false;
                 }
                 // Should reset to false if not actually solved but marked as solved
             } else if self
@@ -327,7 +330,10 @@ impl PuzzleState {
                 if !clue_info.solved {
                     // New solve
                     clue_info.solved = true;
+                    clue_info.new_solve = true;
                     new_solves.push((*clue_num, Direction::Down));
+                } else {
+                    clue_info.new_solve = false;
                 }
             } else if self
                 .clues_info
