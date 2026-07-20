@@ -70,7 +70,11 @@ impl PuzzleState {
         let compiler = PdfCompiler::new(self.args.pdf_style);
 
         let mut new_solves = Vec::new();
-        self.update_clues_status(&mut new_solves);
+        // Since the keys won't ever change, doesn't make sense to allocate them everytime withing
+        // update_clues_status
+        let across_clue_keys = self.clues_info.across.keys().copied().collect::<Vec<_>>();
+        let down_clue_keys = self.clues_info.down.keys().copied().collect::<Vec<_>>();
+        self.update_clues_status(&mut new_solves, &across_clue_keys, &down_clue_keys);
 
         compiler.compile_pdf(self)?;
 
@@ -253,7 +257,7 @@ impl PuzzleState {
             if should_recompile {
                 let start = std::time::Instant::now();
 
-                self.update_clues_status(&mut new_solves);
+                self.update_clues_status(&mut new_solves, &across_clue_keys, &down_clue_keys);
 
                 // If there any blanks left after solve, the last solve should still be set
                 last_solve.not_solved = !self

@@ -277,63 +277,69 @@ impl PuzzleState {
         }
     }
 
-    pub(crate) fn update_clues_status(&mut self, new_solves: &mut Vec<(u8, Direction)>) {
+    pub(crate) fn update_clues_status(
+        &mut self,
+        new_solves: &mut Vec<(u8, Direction)>,
+        across_clue_keys: &[u8],
+        down_clue_keys: &[u8],
+    ) {
         new_solves.clear();
 
-        let across_clues = self.clues_info.across.keys().copied().collect::<Vec<_>>();
-        for clue_num in across_clues {
-            if self.is_clue_solved(clue_num, Direction::Across) {
+        // NOTE: It would probably be a good idea to pop the new_solves keys from the keys so they
+        // wouldn't be double checked.
+        // But I would have to make them mutable and then it wouldn't handle clearing clues.
+        for clue_num in across_clue_keys {
+            if self.is_clue_solved(*clue_num, Direction::Across) {
                 let clue_info = self
                     .clues_info
                     .across
-                    .get_mut(&clue_num)
+                    .get_mut(clue_num)
                     .expect("Always going to exist");
                 if !clue_info.solved {
                     // New solve
                     clue_info.solved = true;
-                    new_solves.push((clue_num, Direction::Across));
+                    new_solves.push((*clue_num, Direction::Across));
                 }
                 // Should reset to false if not actually solved but marked as solved
             } else if self
                 .clues_info
                 .across
-                .get(&clue_num)
+                .get(clue_num)
                 .expect("Will always exist")
                 .solved
             {
                 let clue_info = self
                     .clues_info
                     .across
-                    .get_mut(&clue_num)
+                    .get_mut(clue_num)
                     .expect("Always going to exist");
                 clue_info.solved = false;
             }
         }
 
-        let down_clues = self.clues_info.down.keys().copied().collect::<Vec<_>>();
-        for clue_num in down_clues {
-            if self.is_clue_solved(clue_num, Direction::Down) {
+        for clue_num in down_clue_keys {
+            if self.is_clue_solved(*clue_num, Direction::Down) {
                 let clue_info = self
                     .clues_info
                     .down
-                    .get_mut(&clue_num)
+                    .get_mut(clue_num)
                     .expect("Always going to exist");
                 if !clue_info.solved {
                     // New solve
                     clue_info.solved = true;
-                    new_solves.push((clue_num, Direction::Down));
+                    new_solves.push((*clue_num, Direction::Down));
                 }
             } else if self
                 .clues_info
                 .down
-                .get(&clue_num)
+                .get(clue_num)
                 .expect("Will always exist")
                 .solved
             {
                 let clue_info = self
                     .clues_info
                     .down
-                    .get_mut(&clue_num)
+                    .get_mut(clue_num)
                     .expect("Always going to exist");
                 clue_info.solved = false;
             }
