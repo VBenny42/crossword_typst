@@ -209,8 +209,8 @@ impl PuzzleState {
             // Guess can possibly be interweaved to get the an actual guess if it is less than the
             // needed length
             match (a_interweave_count, d_interweave_count) {
-                (true, false) => return Ok((Direction::Across, a_clue)),
-                (false, true) => return Ok((Direction::Down, d_clue)),
+                (true, false) => a_guess = Cow::Owned(interweave_guess(&a_word_so_far, guess)),
+                (false, true) => d_guess = Cow::Owned(interweave_guess(&d_word_so_far, guess)),
                 (false, false) => {
                     // Move on, but don't modify a_guess or d_guess,
                     // since they can't be interweaved
