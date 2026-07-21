@@ -243,22 +243,23 @@ impl PuzzleState {
                 }
             }
 
-            let across_closeness = a_guess
+            // Count wrong letters instead
+            let across_wrong_letters = a_guess
                 .chars()
                 .zip(a_solution_word.chars())
-                .filter(|(guess, solution)| guess.eq_ignore_ascii_case(solution))
+                .filter(|(guess, solution)| !guess.eq_ignore_ascii_case(solution))
                 .count();
-            let down_closeness = d_guess
+            let down_wrong_letters = d_guess
                 .chars()
                 .zip(d_solution_word.chars())
-                .filter(|(guess, solution)| guess.eq_ignore_ascii_case(solution))
+                .filter(|(guess, solution)| !guess.eq_ignore_ascii_case(solution))
                 .count();
 
-            match across_closeness.cmp(&down_closeness) {
+            match across_wrong_letters.cmp(&down_wrong_letters) {
                 // It's more likely across
-                Ordering::Greater => return Ok((Direction::Across, a_clue)),
+                Ordering::Less => return Ok((Direction::Across, a_clue)),
                 // It's more likely down
-                Ordering::Less => return Ok((Direction::Down, d_clue)),
+                Ordering::Greater => return Ok((Direction::Down, d_clue)),
                 Ordering::Equal => {
                     // Continue to ask the user for direction choice
                 }
@@ -287,7 +288,7 @@ impl PuzzleState {
 
         // NOTE: It would probably be a good idea to pop the new_solves keys from the keys so they
         // wouldn't be double checked.
-        // But I would have to make them mutable and then it wouldn't handle clearing clues.
+        // But I would have to make them mutable and then it wouldn't handle clearing the puzzle.
         for clue_num in across_clue_keys {
             if self.is_clue_solved(*clue_num, Direction::Across) {
                 let clue_info = self
