@@ -15,13 +15,17 @@
     inset: 0.5pt,
     {
       if percent > 0 {
-        box(height: 100%, width: width * percent, fill: fg)
+        box(height: 100%, width: 100% * percent, fill: fg)
       }
 
-      let color = if percent < 0.5 { fg } else { bg }
-      let inverse_color = if percent < 0.5 { bg } else { fg }
+      let (color, inverse_color) = if percent < 0.5 {
+        (fg, bg)
+      } else {
+        (bg, fg)
+      }
 
       if percent >= 0.43 and percent <= 0.56 {
+        // Outline
         place(
           center + horizon,
           text(
