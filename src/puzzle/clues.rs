@@ -198,10 +198,14 @@ impl PuzzleState {
             let (a_word_so_far, a_solution_word) = self.get_clue_so_far(number, Direction::Across);
             let (d_word_so_far, d_solution_word) = self.get_clue_so_far(number, Direction::Down);
 
-            let a_interweave_count =
-                a_word_so_far.chars().filter(|c| *c == BLANK_CELL).count() == guess.len();
-            let d_interweave_count =
-                d_word_so_far.chars().filter(|c| *c == BLANK_CELL).count() == guess.len();
+            let a_interweave_count = a_word_so_far.chars().filter(|c| *c == BLANK_CELL).count()
+                == guess.len()
+            // Only interweave the guess if the guess is not the full length of the clue
+            // In that case just use the guess
+                && guess.len() != a_clue.length;
+            let d_interweave_count = d_word_so_far.chars().filter(|c| *c == BLANK_CELL).count()
+                == guess.len()
+                && guess.len() != d_clue.length;
 
             let mut a_guess: Cow<str> = Cow::Borrowed(guess);
             let mut d_guess: Cow<str> = Cow::Borrowed(guess);
