@@ -182,10 +182,8 @@ impl PuzzleState {
         let a_clue = across_clue.expect("Across clue should be Some by this point");
         let d_clue = down_clue.expect("Down clue should be Some by this point");
 
-        let across_clue_solved = self.is_clue_solved(number, Direction::Across);
-        let down_clue_solved = self.is_clue_solved(number, Direction::Down);
-
-        match (across_clue_solved, down_clue_solved) {
+        // update_clues_status will update all clues as needed
+        match (a_clue.solved, d_clue.solved) {
             (true, false) => return Ok((Direction::Down, d_clue)),
             (false, true) => return Ok((Direction::Across, a_clue)),
             (true, true) => return Err("Both across and down clues are already solved.".into()),
@@ -224,7 +222,6 @@ impl PuzzleState {
                     d_guess_len = d_clue.length;
                     d_should_interweave = true
                 }
-
                 (false, false) => {
                     // Move on, but don't modify a_guess or d_guess,
                     // since they can't be interweaved
