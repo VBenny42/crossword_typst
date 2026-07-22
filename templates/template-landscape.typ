@@ -409,7 +409,7 @@
                             num,
                             default: false,
                           )
-                            and not is_finished
+                          // and not is_finished
                         ) {
                           ("italic", "bold")
                         } else {
