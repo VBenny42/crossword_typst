@@ -207,14 +207,24 @@ impl PuzzleState {
                 == guess.len()
                 && guess.len() != d_clue.length;
 
-            let mut a_guess: Cow<str> = Cow::Borrowed(guess);
-            let mut d_guess: Cow<str> = Cow::Borrowed(guess);
+            let mut a_guess_len = guess.len();
+            let mut d_guess_len = guess.len();
+
+            let mut a_should_interweave = false;
+            let mut d_should_interweave = false;
 
             // Guess can possibly be interweaved to get the an actual guess if it is less than the
             // needed length
             match (a_interweave_count, d_interweave_count) {
-                (true, false) => a_guess = Cow::Owned(interweave_guess(&a_word_so_far, guess)),
-                (false, true) => d_guess = Cow::Owned(interweave_guess(&d_word_so_far, guess)),
+                (true, false) => {
+                    a_guess_len = a_clue.length;
+                    a_should_interweave = true;
+                }
+                (false, true) => {
+                    d_guess_len = d_clue.length;
+                    d_should_interweave = true
+                }
+
                 (false, false) => {
                     // Move on, but don't modify a_guess or d_guess,
                     // since they can't be interweaved
@@ -222,15 +232,14 @@ impl PuzzleState {
                 (true, true) => {
                     // Check for closeness
                     // Use interweaved guesses once they both have same length
-                    a_guess = Cow::Owned(interweave_guess(&a_word_so_far, guess));
-                    d_guess = Cow::Owned(interweave_guess(&d_word_so_far, guess));
+                    a_guess_len = a_clue.length;
+                    d_guess_len = d_clue.length;
+                    a_should_interweave = true;
+                    d_should_interweave = true
                 }
             }
 
-            match (
-                a_guess.len() == a_clue.length,
-                d_guess.len() == d_clue.length,
-            ) {
+            match (a_guess_len == a_clue.length, d_guess_len == d_clue.length) {
                 (true, false) => return Ok((Direction::Across, a_clue)),
                 (false, true) => return Ok((Direction::Down, d_clue)),
                 (false, false) => {
@@ -245,6 +254,17 @@ impl PuzzleState {
                 (true, true) => {
                     // Check which one is closer to the actual answer
                 }
+            }
+
+            // Only by this point do we actually need to calculate the interweaved guess
+            let mut a_guess: Cow<str> = Cow::Borrowed(guess);
+            let mut d_guess: Cow<str> = Cow::Borrowed(guess);
+
+            if a_should_interweave {
+                a_guess = Cow::Owned(interweave_guess(&a_word_so_far, guess));
+            }
+            if d_should_interweave {
+                d_guess = Cow::Owned(interweave_guess(&d_word_so_far, guess));
             }
 
             // Count wrong letters instead
@@ -322,6 +342,7 @@ impl PuzzleState {
                     .get_mut(clue_num)
                     .expect("Always going to exist");
                 clue_info.solved = false;
+                clue_info.new_solve = false;
             }
         }
 
@@ -353,6 +374,7 @@ impl PuzzleState {
                     .get_mut(clue_num)
                     .expect("Always going to exist");
                 clue_info.solved = false;
+                clue_info.new_solve = false;
             }
         }
     }
