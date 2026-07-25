@@ -6,7 +6,7 @@ use typst::{
     comemo,
     foundations::{Dict, IntoValue},
 };
-use typst_as_lib::{typst_kit_options::TypstKitFontOptions, TypstEngine};
+use typst_as_lib::TypstEngine;
 use typst_pdf::PdfOptions;
 
 use crate::puzzle::get_puz_json;
@@ -18,6 +18,9 @@ static TEMPLATE_LARGER_FILE: &str = include_str!("../templates/template-larger.t
 static TEMPLATE_LANDSCAPE_FILE: &str = include_str!("../templates/template-landscape.typ");
 static PDF_OUTPUT_PATH: &str = "./crossword.pdf";
 
+static FONT_REGULAR: &[u8] = include_bytes!("../fonts/Helvetica/Helvetica.ttf");
+static FONT_BOLD: &[u8] = include_bytes!("../fonts/Helvetica/Helvetica-Bold.ttf");
+
 static SOCKET_PATH: &str = "/tmp/fancy-cat.sock";
 
 pub struct PdfCompiler {
@@ -26,7 +29,7 @@ pub struct PdfCompiler {
 
 impl PdfCompiler {
     pub fn new(pdf_style: PdfStyle) -> Self {
-        let build = || TypstEngine::builder().search_fonts_with(TypstKitFontOptions::default());
+        let build = || TypstEngine::builder().fonts([FONT_REGULAR, FONT_BOLD]);
         let main_file = match pdf_style {
             PdfStyle::Normal => TEMPLATE_NORMAL_FILE,
             PdfStyle::Larger => TEMPLATE_LARGER_FILE,
