@@ -20,6 +20,7 @@ static PDF_OUTPUT_PATH: &str = "./crossword.pdf";
 
 static FONT_REGULAR: &[u8] = include_bytes!("../fonts/Helvetica/Helvetica.ttf");
 static FONT_BOLD: &[u8] = include_bytes!("../fonts/Helvetica/Helvetica-Bold.ttf");
+static FONT_OBLIQUE: &[u8] = include_bytes!("../fonts/Helvetica/Helvetica-Oblique.ttf");
 
 static SOCKET_PATH: &str = "/tmp/fancy-cat.sock";
 
@@ -29,7 +30,7 @@ pub struct PdfCompiler {
 
 impl PdfCompiler {
     pub fn new(pdf_style: PdfStyle) -> Self {
-        let build = || TypstEngine::builder().fonts([FONT_REGULAR, FONT_BOLD]);
+        let build = || TypstEngine::builder().fonts([FONT_REGULAR, FONT_BOLD, FONT_OBLIQUE]);
         let main_file = match pdf_style {
             PdfStyle::Normal => TEMPLATE_NORMAL_FILE,
             PdfStyle::Larger => TEMPLATE_LARGER_FILE,
