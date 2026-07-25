@@ -406,7 +406,7 @@
                       if num != none {
                         let (style, weight) = if (
                           is_new_solve.at(
-                            num,
+                            str(num),
                             default: false,
                           )
                           // and not is_finished

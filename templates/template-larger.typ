@@ -5,8 +5,7 @@
 #set page(paper: "us-legal")
 #set page(margin: (left: 0.25in, right: 0.25in, top: 0.5in, bottom: 0.5in))
 #set text(size: 14pt)
-// #set text(font: "Helvetica")
-#set text(font: "Arial")
+#set text(font: "Helvetica")
 
 
 // white and black colors

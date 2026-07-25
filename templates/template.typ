@@ -5,8 +5,7 @@
 #set page(paper: "us-letter")
 #set page(margin: (left: 0.25in, right: 0.25in, top: 0.5in, bottom: 0.5in))
 #set text(size: 14pt)
-// #set text(font: "Helvetica")
-#set text(font: "Arial")
+#set text(font: "Helvetica")
 
 
 // white and black colors
@@ -185,8 +184,11 @@
       if word_solved {
         if (
           (
-            inputs.hide_completed_clues == "true"
-              or inputs.hide_completed_clues == true
+            inputs.at("hide_completed_clues", default: false)
+              and (
+                inputs.hide_completed_clues == "true"
+                  or inputs.hide_completed_clues == true
+              )
           )
             and not is_finished
         ) { continue }
