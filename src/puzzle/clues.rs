@@ -282,6 +282,11 @@ impl PuzzleState {
                 // It's more likely down
                 Ordering::Greater => return Ok((Direction::Down, d_clue)),
                 Ordering::Equal => {
+                    // If there are no wrong letters,
+                    // Both clues can work, just default to across
+                    if across_wrong_letters == 0 && down_wrong_letters == 0 {
+                        return Ok((Direction::Across, a_clue));
+                    }
                     // Continue to ask the user for direction choice
                 }
             }
