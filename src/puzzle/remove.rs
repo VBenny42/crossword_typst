@@ -116,6 +116,10 @@ impl PuzzleState {
             println!("{number}. {clue_text}, {direction}.");
         }
 
+        if clue_info.solved {
+            return Err("You already solved this clue!".into());
+        }
+
         for (y, row) in self.puzzle.grid.blank.iter_mut().enumerate() {
             let mut chars: Vec<char> = row.chars().collect();
             for (x, c) in chars.iter_mut().enumerate() {

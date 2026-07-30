@@ -47,18 +47,10 @@ impl PuzzleState {
     }
 
     pub(crate) fn is_clue_solved(&self, number: u8, direction: Direction) -> bool {
-        let clue_info = match direction {
-            Direction::Across => self
-                .clues_info
-                .across
-                .get(&number)
-                .expect("Clue number not found in across clues"),
-            Direction::Down => self
-                .clues_info
-                .down
-                .get(&number)
-                .expect("Clue number not found in down clues"),
-        };
+        let clue_info = self
+            .clues_info
+            .get_clue_info(number, direction)
+            .expect("Clue number not found in clues");
 
         match direction {
             Direction::Across => self.puzzle.grid.blank[clue_info.y]
@@ -96,18 +88,10 @@ impl PuzzleState {
         number: u8,
         direction: Direction,
     ) -> (Cow<'_, str>, Cow<'_, str>) {
-        let clue_info = match direction {
-            Direction::Across => self
-                .clues_info
-                .across
-                .get(&number)
-                .expect("Clue number not found in across clues"),
-            Direction::Down => self
-                .clues_info
-                .down
-                .get(&number)
-                .expect("Clue number not found in down clues"),
-        };
+        let clue_info = self
+            .clues_info
+            .get_clue_info(number, direction)
+            .expect("Clue number not found in clues");
 
         let mut word_so_far: Cow<'_, str> = match direction {
             Direction::Across => Cow::Borrowed(
