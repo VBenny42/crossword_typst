@@ -4,7 +4,7 @@ use std::error::Error;
 use crate::pdfgen::PdfCompiler;
 use crate::puzzle::clues::interweave_guess;
 use crate::puzzle::input;
-use crate::types::{Direction, PuzzleState, BLACK_CELL, BLANK_CELL};
+use crate::types::{BLACK_CELL, BLANK_CELL, Direction, PuzzleState};
 
 macro_rules! try_or_continue {
     ($expr:expr, $msg:expr) => {
@@ -78,11 +78,21 @@ impl PuzzleState {
 
         compiler.compile_pdf(self)?;
 
-        println!("Can solve clues by entering the clue number followed by your guess, e.g., `<CLUENUMBER> <GUESS>`.");
-        println!("Can also pick a clue to solve by entering the clue number on its own, e.g., `<CLUENUMBER>`, and then entering your guess when prompted.");
-        println!("This only works if the clue is not any number between 1 and 8, which are reserved for the menu options.");
-        println!("Can also reveal a clue by entering the clue number followed by your guess, e.g., `7 <CLUENUMBER>`.");
-        println!("Can also type the guess for last solved clue and the solver will try and use it, e.g. `<GUESS>`.");
+        println!(
+            "Can solve clues by entering the clue number followed by your guess, e.g., `<CLUENUMBER> <GUESS>`."
+        );
+        println!(
+            "Can also pick a clue to solve by entering the clue number on its own, e.g., `<CLUENUMBER>`, and then entering your guess when prompted."
+        );
+        println!(
+            "This only works if the clue is not any number between 1 and 8, which are reserved for the menu options."
+        );
+        println!(
+            "Can also reveal a clue by entering the clue number followed by your guess, e.g., `7 <CLUENUMBER>`."
+        );
+        println!(
+            "Can also type the guess for last solved clue and the solver will try and use it, e.g. `<GUESS>`."
+        );
 
         let mut last_solve = LastSolve::default();
 

@@ -1,4 +1,4 @@
-use puz_parse::{parse, Puzzle};
+use puz_parse::{Puzzle, parse};
 use std::{
     collections::HashMap,
     error::Error,
@@ -8,7 +8,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::types::{ClueInfo, CluesInfo, OutputFormat, PuzzleState, BLACK_CELL, BLANK_CELL};
+use crate::types::{BLACK_CELL, BLANK_CELL, ClueInfo, CluesInfo, OutputFormat, PuzzleState};
 
 mod clues;
 mod remove;
@@ -38,7 +38,9 @@ impl PuzzleState {
                 if read_puzzle.info.title == puzzle.info.title {
                     puzzle.grid.blank.clone_from(&read_puzzle.grid.blank);
                 } else {
-                    eprintln!("Warning: The puzzle title in the JSON file does not match the original puzzle. Overwriting JSON file with blank puzzle data...");
+                    eprintln!(
+                        "Warning: The puzzle title in the JSON file does not match the original puzzle. Overwriting JSON file with blank puzzle data..."
+                    );
                     args.output_format.write_puzzle_to_file(
                         &args.output_path,
                         &args.puzzle_file_path,

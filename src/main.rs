@@ -1,5 +1,5 @@
 use crate::types::{OutputFormat, PdfStyle, PuzzleState};
-use clap::{parser::ValueSource, ArgAction::SetTrue, CommandFactory, FromArgMatches, Parser};
+use clap::{ArgAction::SetTrue, CommandFactory, FromArgMatches, Parser, parser::ValueSource};
 use directories::ProjectDirs;
 use std::{fs, path::PathBuf};
 

@@ -10,7 +10,7 @@ use typst_as_lib::TypstEngine;
 use typst_pdf::PdfOptions;
 
 use crate::puzzle::get_puz_json;
-use crate::types::{CluesInfo, PdfStyle, PuzzleState, BLANK_CELL};
+use crate::types::{BLANK_CELL, CluesInfo, PdfStyle, PuzzleState};
 
 static HELPERS_FILE: &str = include_str!("../templates/helpers.typ");
 static TEMPLATE_NORMAL_FILE: &str = include_str!("../templates/template.typ");

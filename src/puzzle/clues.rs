@@ -2,7 +2,7 @@ use std::{borrow::Cow, cmp::Ordering, error::Error};
 
 use crate::{
     puzzle::input,
-    types::{ClueInfo, CluesInfo, Direction, PuzzleState, BLANK_CELL},
+    types::{BLANK_CELL, ClueInfo, CluesInfo, Direction, PuzzleState},
 };
 
 impl CluesInfo {
@@ -156,7 +156,7 @@ impl PuzzleState {
             (Some(clue), None) => return Ok((Direction::Across, clue)),
             (None, Some(clue)) => return Ok((Direction::Down, clue)),
             (None, None) => {
-                return Err("Clue number not found in either across or down clues".into())
+                return Err("Clue number not found in either across or down clues".into());
             }
             (Some(_), Some(_)) => {
                 // Move onto seeing if one of the clues are already solved
@@ -276,7 +276,9 @@ impl PuzzleState {
             }
         }
 
-        println!("Clue number {number} exists in both across and down clues. Please choose clue direction:");
+        println!(
+            "Clue number {number} exists in both across and down clues. Please choose clue direction:"
+        );
         println!("1. Across clue");
         println!("2. Down clue");
 

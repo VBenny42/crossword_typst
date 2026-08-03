@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use crate::puzzle::input;
-use crate::types::{Direction, PuzzleState, BLANK_CELL};
+use crate::types::{BLANK_CELL, Direction, PuzzleState};
 
 impl PuzzleState {
     pub(crate) fn remove_wrong_answers(&mut self) -> bool {
@@ -19,11 +19,7 @@ impl PuzzleState {
                     .zip(solution_row.chars())
                     .map(
                         |(blank, solution)| {
-                            if blank == solution {
-                                blank
-                            } else {
-                                BLANK_CELL
-                            }
+                            if blank == solution { blank } else { BLANK_CELL }
                         },
                     )
                     .collect()
@@ -53,7 +49,9 @@ impl PuzzleState {
                     (true, false) => (Direction::Down, d_clue),
                     (false, true) => (Direction::Across, a_clue),
                     _ => {
-                        println!("Clue number {number} exists in both across and down clues. Please choose which one to remove:");
+                        println!(
+                            "Clue number {number} exists in both across and down clues. Please choose which one to remove:"
+                        );
                         println!("1. Across clue");
                         println!("2. Down clue");
 
