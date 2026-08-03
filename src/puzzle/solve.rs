@@ -276,6 +276,26 @@ impl PuzzleState {
                     .expect("last_solve would always have valid clue_info")
                     .solved;
 
+                if !last_solve.not_solved {
+                    // Solve worked, check if the clue was a corner clue and make the other
+                    // direction the new last_solve
+                    let alternate_clue = self
+                        .clues_info
+                        .get_clue_info(last_solve.clue_number, last_solve.direction.alternate());
+
+                    if let Some(alternate_clue) = alternate_clue
+                        && !alternate_clue.solved
+                    {
+                        last_solve.direction = last_solve.direction.alternate();
+                        last_solve.not_solved = true;
+                        last_solve.max_length = alternate_clue.length;
+                        println!(
+                            "Last solve is set to {}-{}",
+                            last_solve.clue_number, last_solve.direction
+                        );
+                    }
+                }
+
                 compiler.compile_pdf(self)?;
                 self.args.output_format.write_puzzle_to_file(
                     &self.args.output_path,

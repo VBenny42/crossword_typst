@@ -65,6 +65,15 @@ impl FromStr for Direction {
     }
 }
 
+impl Direction {
+    pub fn alternate(&self) -> Self {
+        match *self {
+            Self::Across => Self::Down,
+            Self::Down => Self::Across,
+        }
+    }
+}
+
 #[derive(clap::ValueEnum, Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum OutputFormat {
     Json,
