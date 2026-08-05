@@ -46,7 +46,7 @@ impl PuzzleState {
         Some((clue_number, guess))
     }
 
-    pub(crate) fn is_clue_solved(&self, number: u8, direction: Direction) -> bool {
+    fn is_clue_solved(&self, number: u8, direction: Direction) -> bool {
         let clue_info = self
             .clues_info
             .get_clue_info(number, direction)
