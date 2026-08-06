@@ -40,9 +40,8 @@ pub struct PuzzleState {
 pub const BLANK_CELL: char = '-';
 pub const BLACK_CELL: char = '.';
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Direction {
-    #[default]
     Across,
     Down,
 }
