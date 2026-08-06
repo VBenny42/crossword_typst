@@ -16,6 +16,17 @@ impl CluesInfo {
             Direction::Down => self.down.get(&clue_number),
         }
     }
+
+    pub fn get_mut_clue_info(
+        &mut self,
+        clue_number: u8,
+        direction: Direction,
+    ) -> Option<&mut ClueInfo> {
+        match direction {
+            Direction::Across => self.across.get_mut(&clue_number),
+            Direction::Down => self.down.get_mut(&clue_number),
+        }
+    }
 }
 
 impl PuzzleState {
@@ -295,80 +306,99 @@ impl PuzzleState {
         }
     }
 
+    fn update_clue_status(
+        &mut self,
+        new_solves: &mut Vec<(u8, Direction)>,
+        clue_number: u8,
+        direction: Direction,
+    ) {
+        // println!("Checking clue {clue_number} in direction {direction:?}");
+        if self.is_clue_solved(clue_number, direction) {
+            let clue_info = self
+                .clues_info
+                .get_mut_clue_info(clue_number, direction)
+                .expect("Will always exist");
+
+            if !clue_info.solved {
+                // New solve
+                clue_info.solved = true;
+                clue_info.new_solve = true;
+                new_solves.push((clue_number, direction));
+            } else {
+                clue_info.new_solve = false;
+            }
+        } else if self
+            .clues_info
+            .get_clue_info(clue_number, direction)
+            .expect("Will always exist")
+            .solved
+        {
+            let clue_info = self
+                .clues_info
+                .get_mut_clue_info(clue_number, direction)
+                .expect("Will always exist");
+            clue_info.solved = false;
+            clue_info.new_solve = false;
+        }
+    }
+
     pub(crate) fn update_clues_status(
         &mut self,
         new_solves: &mut Vec<(u8, Direction)>,
         across_clue_keys: &[u8],
         down_clue_keys: &[u8],
+        updated_clue: Option<(u8, Direction)>,
     ) {
         new_solves.clear();
 
-        // NOTE: It would probably be a good idea to pop the new_solves keys from the keys so they
-        // wouldn't be double checked.
-        // But I would have to make them mutable and then it wouldn't handle clearing the puzzle.
-        for clue_num in across_clue_keys {
-            if self.is_clue_solved(*clue_num, Direction::Across) {
+        if let Some(updated_clue) = updated_clue {
+            let (clue_number, direction) = updated_clue;
+
+            let coords = {
                 let clue_info = self
                     .clues_info
-                    .across
-                    .get_mut(clue_num)
-                    .expect("Always going to exist");
-                if !clue_info.solved {
-                    // New solve
-                    clue_info.solved = true;
-                    clue_info.new_solve = true;
-                    new_solves.push((*clue_num, Direction::Across));
-                } else {
-                    clue_info.new_solve = false;
+                    .get_clue_info(clue_number, direction)
+                    .expect("Should always exist");
+                let (cx, cy, length) = (clue_info.x, clue_info.y, clue_info.length);
+                (0..length).map(move |i| match direction {
+                    Direction::Across => (cx + i, cy),
+                    Direction::Down => (cx, cy + i),
+                })
+            };
+
+            // Check actual clue
+            self.update_clue_status(new_solves, clue_number, direction);
+
+            // Check only clues for other direction
+            let alternate_idx = match direction {
+                Direction::Across => 1,
+                Direction::Down => 0,
+            };
+            let alternate_direction = direction.alternate();
+
+            for (x, y) in coords {
+                if let Some(possible_clues) = &self.intersections[y][x]
+                    && self.puzzle.grid.blank[y].as_bytes()[x] != BLANK_CELL as u8
+                    // Clue is not the default one
+                    && possible_clues[alternate_idx] != u8::default()
+                {
+                    self.update_clue_status(
+                        new_solves,
+                        possible_clues[alternate_idx],
+                        alternate_direction,
+                    );
                 }
-                // Should reset to false if not actually solved but marked as solved
-            } else if self
-                .clues_info
-                .across
-                .get(clue_num)
-                .expect("Will always exist")
-                .solved
-            {
-                let clue_info = self
-                    .clues_info
-                    .across
-                    .get_mut(clue_num)
-                    .expect("Always going to exist");
-                clue_info.solved = false;
-                clue_info.new_solve = false;
             }
+
+            return;
+        }
+
+        for clue_num in across_clue_keys {
+            self.update_clue_status(new_solves, *clue_num, Direction::Across);
         }
 
         for clue_num in down_clue_keys {
-            if self.is_clue_solved(*clue_num, Direction::Down) {
-                let clue_info = self
-                    .clues_info
-                    .down
-                    .get_mut(clue_num)
-                    .expect("Always going to exist");
-                if !clue_info.solved {
-                    // New solve
-                    clue_info.solved = true;
-                    clue_info.new_solve = true;
-                    new_solves.push((*clue_num, Direction::Down));
-                } else {
-                    clue_info.new_solve = false;
-                }
-            } else if self
-                .clues_info
-                .down
-                .get(clue_num)
-                .expect("Will always exist")
-                .solved
-            {
-                let clue_info = self
-                    .clues_info
-                    .down
-                    .get_mut(clue_num)
-                    .expect("Always going to exist");
-                clue_info.solved = false;
-                clue_info.new_solve = false;
-            }
+            self.update_clue_status(new_solves, *clue_num, Direction::Down);
         }
     }
 }

@@ -32,6 +32,7 @@ pub struct CluesInfo {
 pub struct PuzzleState {
     pub puzzle: Puzzle,
     pub clues_info: CluesInfo,
+    pub intersections: Intersections,
 
     pub args: Args,
 }
@@ -39,8 +40,9 @@ pub struct PuzzleState {
 pub const BLANK_CELL: char = '-';
 pub const BLACK_CELL: char = '.';
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, Default)]
 pub enum Direction {
+    #[default]
     Across,
     Down,
 }
@@ -171,3 +173,5 @@ impl FromStr for PdfStyle {
         }
     }
 }
+
+pub type Intersections = Vec<Vec<Option<[u8; 2]>>>;

@@ -8,7 +8,9 @@ use std::{
     str::FromStr,
 };
 
-use crate::types::{BLACK_CELL, BLANK_CELL, ClueInfo, CluesInfo, OutputFormat, PuzzleState};
+use crate::types::{
+    BLACK_CELL, BLANK_CELL, ClueInfo, CluesInfo, Intersections, OutputFormat, PuzzleState,
+};
 
 mod clues;
 mod remove;
@@ -18,7 +20,7 @@ impl PuzzleState {
     pub fn new(args: &crate::Args) -> Result<Self, Box<dyn Error>> {
         let mut puzzle = initialize_puzzle(&args.puzzle_file_path)?;
 
-        let clues_info = extract_clue_info(&puzzle);
+        let (clues_info, intersections) = extract_clue_info(&puzzle);
 
         match args.output_format {
             OutputFormat::Json => {
@@ -68,6 +70,7 @@ impl PuzzleState {
         Ok(Self {
             puzzle,
             clues_info,
+            intersections,
             args: args.clone(),
         })
     }
@@ -115,18 +118,21 @@ fn input<T: FromStr>() -> Result<T, <T as FromStr>::Err> {
     input.trim().parse()
 }
 
-fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
+fn extract_clue_info(puzzle: &Puzzle) -> (CluesInfo, Intersections) {
     let mut across_clues = HashMap::new();
     let mut down_clues = HashMap::new();
 
     let mut clue_number = 1;
 
-    for y in 0..puzzle.info.height as usize {
-        for x in 0..puzzle.info.width as usize {
+    let mut clues_intersections: Intersections =
+        vec![vec![None; puzzle.info.width as usize]; puzzle.info.height as usize];
+
+    (0..puzzle.info.height as usize).for_each(|y| {
+        (0..puzzle.info.width as usize).for_each(|x| {
             let cell = puzzle.grid.blank[y].chars().nth(x).unwrap_or(BLANK_CELL);
 
             if cell == BLACK_CELL {
-                continue; // Skip black squares
+                return; // Skip black squares
             }
             let mut is_clue_start = false;
 
@@ -168,6 +174,16 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                         new_solve: false,
                     },
                 );
+
+                (0..clue_length).for_each(|i| {
+                    if let Some(cell) = clues_intersections[y][x + i].as_mut() {
+                        cell[0] = clue_number
+                    } else {
+                        // 0 is never used as a clue number, so use as None value
+                        let cell = [clue_number, u8::default()];
+                        clues_intersections[y][x + i] = Some(cell);
+                    }
+                });
             }
             // Check for down clue
             if (y == 0
@@ -207,18 +223,30 @@ fn extract_clue_info(puzzle: &Puzzle) -> CluesInfo {
                         new_solve: false,
                     },
                 );
+
+                (0..clue_length).for_each(|i| {
+                    if let Some(cell) = clues_intersections[y + i][x].as_mut() {
+                        cell[1] = clue_number
+                    } else {
+                        let cell = [u8::default(), clue_number];
+                        clues_intersections[y + i][x] = Some(cell);
+                    }
+                });
             }
 
             if is_clue_start {
                 clue_number += 1;
             }
-        }
-    }
+        });
+    });
 
-    CluesInfo {
-        across: across_clues,
-        down: down_clues,
-    }
+    (
+        CluesInfo {
+            across: across_clues,
+            down: down_clues,
+        },
+        clues_intersections,
+    )
 }
 
 pub fn get_puz_json(puzzle: &Puzzle) -> Result<String, serde_json::Error> {

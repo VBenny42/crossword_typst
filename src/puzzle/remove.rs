@@ -91,7 +91,7 @@ impl PuzzleState {
         Ok(())
     }
 
-    pub(crate) fn reveal_clue_answer(&mut self, number: u8) -> Result<(), Box<dyn Error>> {
+    pub(crate) fn reveal_clue_answer(&mut self, number: u8) -> Result<Direction, Box<dyn Error>> {
         let (direction, clue_info) = self.select_clue(number, None)?;
         let clue_info = *clue_info;
 
@@ -137,6 +137,6 @@ impl PuzzleState {
             *row = chars.into_iter().collect();
         }
 
-        Ok(())
+        Ok(direction)
     }
 }

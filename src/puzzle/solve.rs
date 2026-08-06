@@ -19,7 +19,7 @@ macro_rules! try_or_continue {
 }
 
 macro_rules! solve_clue_input {
-    ($self:expr, $direction:expr) => {
+    ($self:expr, $direction:expr, $clue_solve:expr) => {
         println!("Please enter the clue number [+ guess]:");
 
         let input_string: String = try_or_continue!(input(), "Invalid input. Error:");
@@ -42,6 +42,8 @@ macro_rules! solve_clue_input {
             $self.solve_clue(clue_number, $direction, split.next()),
             "Solve:"
         );
+
+        $clue_solve = Some((clue_number, $direction));
     };
 }
 
@@ -74,7 +76,7 @@ impl PuzzleState {
         // update_clues_status
         let across_clue_keys = self.clues_info.across.keys().copied().collect::<Vec<_>>();
         let down_clue_keys = self.clues_info.down.keys().copied().collect::<Vec<_>>();
-        self.update_clues_status(&mut new_solves, &across_clue_keys, &down_clue_keys);
+        self.update_clues_status(&mut new_solves, &across_clue_keys, &down_clue_keys, None);
 
         compiler.compile_pdf(self)?;
 
@@ -95,6 +97,7 @@ impl PuzzleState {
         );
 
         let mut last_solve = LastSolve::default();
+        let mut updated_clue: Option<(u8, Direction)> = None;
 
         loop {
             if !new_solves.is_empty() {
@@ -108,6 +111,13 @@ impl PuzzleState {
                 // update_clues_status also clears the vec,
                 // This clear is to take care of when a guess causes an error
                 // and the loop continues without update_clues_status getting called
+                for (clue_num, direction) in new_solves.iter() {
+                    let clue_info = self
+                        .clues_info
+                        .get_mut_clue_info(*clue_num, *direction)
+                        .expect("Will always exist");
+                    clue_info.new_solve = false;
+                }
                 new_solves.clear();
                 // After the first pass, all the initial solved clues show up,
                 // But after that only a few clues would be solved at once
@@ -138,12 +148,12 @@ impl PuzzleState {
             match choice.as_str() {
                 "1" => {
                     println!("You chose to solve an across clue.");
-                    solve_clue_input!(self, Direction::Across);
+                    solve_clue_input!(self, Direction::Across, updated_clue);
                     should_recompile = true;
                 }
                 "2" => {
                     println!("You chose to solve a down clue.");
-                    solve_clue_input!(self, Direction::Down);
+                    solve_clue_input!(self, Direction::Down, updated_clue);
                     should_recompile = true;
                 }
                 "3" => {
@@ -179,6 +189,7 @@ impl PuzzleState {
                         .collect();
 
                     self.puzzle.grid.blank.clone_from(&blank_puzzle_grid);
+
                     should_recompile = true;
                 }
                 "4" => {
@@ -205,10 +216,12 @@ impl PuzzleState {
                     println!("You chose to reveal a clue's answer. Please enter the clue number:");
                     let clue_number: u8 = try_or_continue!(input(), "Invalid digit:");
 
-                    try_or_continue!(
+                    let direction = try_or_continue!(
                         self.reveal_clue_answer(clue_number),
                         "Error revealing clue:"
                     );
+
+                    updated_clue = Some((clue_number, direction));
 
                     should_recompile = true;
                 }
@@ -235,6 +248,8 @@ impl PuzzleState {
 
                     try_or_continue!(self.solve_clue(clue_number, direction, guess), "Solve:");
 
+                    updated_clue = Some((clue_number, direction));
+
                     should_recompile = true;
                 }
                 s if s.starts_with('7') => {
@@ -243,10 +258,12 @@ impl PuzzleState {
                     let clue_number: u8 =
                         try_or_continue!(split.next().unwrap().parse(), "Invalid clue number:");
 
-                    try_or_continue!(
+                    let direction = try_or_continue!(
                         self.reveal_clue_answer(clue_number),
                         "Error revealing clue:"
                     );
+
+                    updated_clue = Some((clue_number, direction));
 
                     should_recompile = true;
                 }
@@ -259,6 +276,8 @@ impl PuzzleState {
                         "Solve retry:"
                     );
 
+                    updated_clue = Some((last_solve.clue_number, last_solve.direction));
+
                     should_recompile = true;
                 }
                 s => println!("Invalid choice, please try again. {s}"),
@@ -267,7 +286,13 @@ impl PuzzleState {
             if should_recompile {
                 let start = std::time::Instant::now();
 
-                self.update_clues_status(&mut new_solves, &across_clue_keys, &down_clue_keys);
+                self.update_clues_status(
+                    &mut new_solves,
+                    &across_clue_keys,
+                    &down_clue_keys,
+                    updated_clue,
+                );
+                updated_clue = None;
 
                 // If there any blanks left after solve, the last solve should still be set
                 last_solve.not_solved = !self
