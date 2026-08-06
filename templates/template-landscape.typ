@@ -46,9 +46,9 @@
   let wrong_letter_exists = false
   let space_exists = false
 
-  // Build a dict of "x,y" -> clue number
-  let number_to_coord = (:)
-  let coord_to_number = (:)
+  let coord_to_number = (none,) * (puzzle.info.width * puzzle.info.height)
+  let number_to_coord = (none,) * (puzzle.info.width * puzzle.info.height)
+
   let n = 1
 
   let filled_cells = 0
@@ -58,13 +58,15 @@
 
   if clues_info != none {
     for (num, info) in clues_info.at("across").pairs() {
-      number_to_coord.insert(str(info.x) + "," + str(info.y), num)
-      coord_to_number.insert(num, (info.x, info.y))
+      number_to_coord.at(info.y * puzzle.info.width + info.x) = num
+
+      coord_to_number.at(int(num)) = (info.x, info.y)
       is_new_solve.insert(num, info.new_solve)
     }
     for (num, info) in clues_info.at("down").pairs() {
-      number_to_coord.insert(str(info.x) + "," + str(info.y), num)
-      coord_to_number.insert(num, (info.x, info.y))
+      number_to_coord.at(info.y * puzzle.info.width + info.x) = num
+
+      coord_to_number.at(int(num)) = (info.x, info.y)
       is_new_solve.insert(
         num,
         is_new_solve.at(num, default: false) or info.new_solve,
@@ -72,14 +74,23 @@
     }
   }
 
+  let grid_rows = range(puzzle.info.height).map(y => puzzle_grid
+    .at(y)
+    .clusters())
+  let solution_rows = range(puzzle.info.height).map(y => puzzle
+    .grid
+    .solution
+    .at(y)
+    .clusters())
+
   for y in range(puzzle.info.height) {
     for x in range(puzzle.info.width) {
-      let cell = puzzle_grid.at(y).clusters().at(x)
+      let cell = grid_rows.at(y).at(x)
       if cell == BLACK_CELL { continue }
 
       all_cells += 1
 
-      let solution_cell = puzzle.grid.solution.at(y).clusters().at(x)
+      let solution_cell = solution_rows.at(y).at(x)
 
       if cell == BLANK_CELL {
         space_exists = true
@@ -97,22 +108,22 @@
 
       if clues_info == none {
         let starts-across = (
-          (x == 0 or puzzle_grid.at(y).clusters().at(x - 1) == BLACK_CELL)
+          (x == 0 or row.at(x - 1) == BLACK_CELL)
             and (
-              x + 1 < puzzle.info.width
-                and puzzle_grid.at(y).clusters().at(x + 1) != BLACK_CELL
+              x + 1 < puzzle.info.width and row.at(x + 1) != BLACK_CELL
             )
         )
         let starts-down = (
-          (y == 0 or puzzle_grid.at(y - 1).clusters().at(x) == BLACK_CELL)
+          (y == 0 or grid_rows.at(y - 1).at(x) == BLACK_CELL)
             and (
               y + 1 < puzzle.info.height
-                and puzzle_grid.at(y + 1).clusters().at(x) != BLACK_CELL
+                and grid_rows.at(y + 1).at(x) != BLACK_CELL
             )
         )
         if starts-across or starts-down {
-          number_to_coord.insert(str(x) + "," + str(y), n)
-          coord_to_number.insert(str(n), (x, y))
+          number_to_coord.at(info.y * puzzle.info.width + info.x) = num
+
+          coord_to_number.at(num) = (info.x, info.y)
           n += 1
         }
       }
@@ -170,7 +181,7 @@
   let down_clues_array = ()
 
   let stars_exist = false
-  let star_spots = (:)
+  let star_spots_flat = (false,) * (puzzle.info.width * puzzle.info.height)
 
   for clue in sorted_across {
     let clue_num = clue.at(0)
@@ -179,8 +190,8 @@
     let has_star = clue.at(1).starts-with("*")
     if has_star {
       stars_exist = true
-      let (x, y) = coord_to_number.at(clue_num)
-      star_spots.insert(str(x) + "," + str(y), true)
+      let (x, y) = coord_to_number.at(clue_num, default: none)
+      star_spots_flat.at(y * puzzle.info.width + x) = true
     }
 
     if clues_info == none {
@@ -239,7 +250,7 @@
     if has_star {
       stars_exist = true
       let (x, y) = coord_to_number.at(clue_num)
-      star_spots.insert(str(x) + "," + str(y), true)
+      star_spots_flat.at(y * puzzle.info.width + x) = true
     }
 
     if clues_info == none {
@@ -296,12 +307,18 @@
     let grid_width = box_unit * puzzle.info.width
     let clue_col_width = (size.width - grid_width - 0.02in) * (0.75 / 1.5)
 
+    let min_items = 21
+
     let across_split_index = across_clues_array.len()
     // Assuming a minimum of 15 items can always fit
-    let start = calc.min(19, across_clues_array.len())
-    // across_split_index = start
+    let start = calc.min(min_items, across_clues_array.len())
 
     for i in range(start, across_clues_array.len() + 1) {
+      if across_clues_array.len() <= min_items {
+        across_split_index = across_clues_array.len()
+        break
+      }
+
       let test_content = [==== Across
         #(across_clues_array.slice(0, i).map(x => x.at("content")).join())]
 
@@ -314,10 +331,14 @@
     }
 
     let down_split_index = down_clues_array.len()
-    start = calc.min(19, down_clues_array.len())
-    // down_split_index = start
+    start = calc.min(min_items, down_clues_array.len())
 
     for i in range(start, down_clues_array.len() + 1) {
+      if down_clues_array.len() <= min_items {
+        down_split_index = down_clues_array.len()
+        break
+      }
+
       let test_content = [==== Down
         #(down_clues_array.slice(0, i).map(x => x.at("content")).join())]
 
@@ -365,9 +386,11 @@
             inset: 0.5mm,
             ..for y in range(puzzle.info.height) {
               for x in range(puzzle.info.width) {
-                let cell = puzzle_grid.at(y).clusters().at(x)
-                let key = str(x) + "," + str(y)
-                let num = number_to_coord.at(key, default: none)
+                let cell = grid_rows.at(y).at(x)
+                let num = number_to_coord.at(
+                  y * puzzle.info.width + x,
+                  default: none,
+                )
                 (
                   box(
                     width: box_unit,
@@ -405,10 +428,11 @@
                       }
                       if num != none {
                         let (style, weight) = if (
-                          is_new_solve.at(
-                            str(num),
-                            default: false,
-                          )
+                          clues_info != none
+                            and is_new_solve.at(
+                              str(num),
+                              default: false,
+                            )
                           // and not is_finished
                         ) {
                           ("italic", "bold")
@@ -428,7 +452,10 @@
                           ),
                         )
                       }
-                      if stars_exist and star_spots.at(key, default: false) {
+                      if (
+                        stars_exist
+                          and star_spots_flat.at(y * puzzle.info.width + x)
+                      ) {
                         place(
                           top + right,
                           dx: -box_unit * 0.05,
