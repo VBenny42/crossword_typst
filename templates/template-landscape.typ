@@ -304,6 +304,8 @@
   layout(size => {
     let available_height = size.height
 
+    // place(rect(width: 100%, height: 100%, fill: gray))
+
     let grid_width = box_unit * puzzle.info.width
     let clue_col_width = (size.width - grid_width - 0.02in) * (0.75 / 1.5)
 
@@ -337,6 +339,12 @@
 
       let running_height = header_height + linebreak_height
 
+      // place(rect(
+      //   width: clue_col_width,
+      //   height: running_height,
+      //   fill: aqua,
+      // ))
+
       for (i, clue) in across_clues_array.slice(min_items).enumerate() {
         let clue_height = measure(
           clue.at("content"),
@@ -360,6 +368,21 @@
       ).height
 
       let running_height = header_height + linebreak_height
+
+      // let m_clue_height = measure(
+      //   down_clues_array.at(min_items).at("content"),
+      //   width: clue_col_width,
+      // ).height
+      //
+      // place(dx: clue_col_width, stack(
+      //   dir: ttb,
+      //   rect(
+      //     width: clue_col_width,
+      //     height: running_height,
+      //     fill: lime,
+      //   ),
+      //   rect(width: clue_col_width, height: m_clue_height, fill: red),
+      // ))
 
       for (i, clue) in down_clues_array.slice(min_items).enumerate() {
         let clue_height = measure(
