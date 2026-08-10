@@ -161,8 +161,21 @@
       puzzle.info.title
     },
     footer: if puzzle.info.notes != none {
-      [#puzzle.info.author #h(1fr) #text(style: "italic", puzzle.info.notes)]
-    } else { puzzle.info.author },
+      context {
+        let text_size = text.size
+        if puzzle.info.notes.len() > 60 {
+          text_size = 0.45 * text_size
+        }
+        grid(
+          columns: 2,
+          align: (left, right),
+          puzzle.info.author,
+          text(style: "italic", size: text_size, puzzle.info.notes),
+        )
+      }
+    } else {
+      puzzle.info.author
+    },
   )
 
   let sorted_across = puzzle
