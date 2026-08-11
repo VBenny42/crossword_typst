@@ -447,7 +447,7 @@
       gutter: 0.01in,
 
       {
-        [==== Across #across_split_index
+        [==== Across
           #(
             across_clues_array
               .slice(0, across_split_index)
@@ -456,7 +456,7 @@
           )]
       },
       {
-        [==== Down #down_split_index
+        [==== Down
           #(
             down_clues_array
               .slice(
