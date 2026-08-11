@@ -333,79 +333,111 @@
     let linebreak_height = two_line_height - (one_line_height * 2)
 
     let min_items = 19
+    let max_items = 34
     // Only call measure if there are more than min_items clues, otherwise we don't need to split
     // Most likely less than min_items clues will fit on the page
 
     let across_split_index = across_clues_array.len()
     if across_split_index > min_items {
-      let header_height = measure(
-        [==== Across
-          #(
-            across_clues_array
-              .slice(0, min_items)
-              .map(x => x.at("content"))
-              .join()
-          )
-        ],
-        width: clue_col_width,
-      ).height
+      let whole_array_height = available_height + linebreak_height
 
-      let running_height = header_height + linebreak_height
-
-      // place(rect(
-      //   width: clue_col_width,
-      //   height: running_height,
-      //   fill: aqua,
-      // ))
-
-      for (i, clue) in across_clues_array.slice(min_items).enumerate() {
-        let clue_height = measure(
-          clue.at("content"),
+      if across_split_index < max_items {
+        whole_array_height = measure(
+          [==== Across
+            #across_clues_array.map(x => x.at("content")).join()
+          ],
           width: clue_col_width,
         ).height
-        running_height += clue_height + linebreak_height
-        if running_height > available_height {
-          across_split_index = i + min_items
-          break
+      }
+
+      if whole_array_height > available_height {
+        let header_height = measure(
+          [==== Across
+            #(
+              across_clues_array
+                .slice(0, min_items)
+                .map(x => x.at("content"))
+                .join()
+            )
+          ],
+          width: clue_col_width,
+        ).height
+
+        let running_height = header_height + linebreak_height
+
+        // place(rect(
+        //   width: clue_col_width,
+        //   height: running_height,
+        //   fill: aqua,
+        // ))
+
+        for (i, clue) in across_clues_array.slice(min_items).enumerate() {
+          let clue_height = measure(
+            clue.at("content"),
+            width: clue_col_width,
+          ).height
+          running_height += clue_height + linebreak_height
+          if running_height > available_height {
+            across_split_index = i + min_items
+            break
+          }
         }
       }
     }
 
     let down_split_index = down_clues_array.len()
     if down_split_index > min_items {
-      let header_height = measure(
-        [==== Down
-          #down_clues_array.slice(0, min_items).map(x => x.at("content")).join()
-        ],
-        width: clue_col_width,
-      ).height
+      let whole_array_height = available_height + linebreak_height
 
-      let running_height = header_height + linebreak_height
-
-      // let m_clue_height = measure(
-      //   down_clues_array.at(min_items).at("content"),
-      //   width: clue_col_width,
-      // ).height
-      //
-      // place(dx: clue_col_width, stack(
-      //   dir: ttb,
-      //   rect(
-      //     width: clue_col_width,
-      //     height: running_height,
-      //     fill: lime,
-      //   ),
-      //   rect(width: clue_col_width, height: m_clue_height, fill: red),
-      // ))
-
-      for (i, clue) in down_clues_array.slice(min_items).enumerate() {
-        let clue_height = measure(
-          clue.at("content"),
+      if down_split_index < max_items {
+        whole_array_height = measure(
+          [==== Down
+            #down_clues_array.map(x => x.at("content")).join()
+          ],
           width: clue_col_width,
         ).height
-        running_height += clue_height + linebreak_height
-        if running_height > available_height {
-          down_split_index = i + min_items
-          break
+      }
+
+      if whole_array_height > available_height {
+        let header_height = measure(
+          [==== Down
+            #(
+              down_clues_array
+                .slice(0, min_items)
+                .map(x => x.at("content"))
+                .join()
+            )
+          ],
+          width: clue_col_width,
+        ).height
+
+        let running_height = header_height + linebreak_height
+
+        // let m_clue_height = measure(
+        //   down_clues_array.at(min_items).at("content"),
+        //   width: clue_col_width,
+        // ).height
+        //
+        // place(dx: clue_col_width, stack(
+        //   dir: ttb,
+        //   rect(
+        //     width: clue_col_width,
+        //     height: running_height,
+        //     fill: lime,
+        //   ),
+        //   rect(width: clue_col_width, height: m_clue_height, fill: red),
+        // ))
+
+        for (i, clue) in down_clues_array.slice(min_items).enumerate() {
+          let clue_height = measure(
+            clue.at("content"),
+            width: clue_col_width,
+          ).height
+          running_height += clue_height + linebreak_height
+          if running_height > available_height {
+            down_split_index = i + min_items
+            break
+          }
         }
       }
     }
