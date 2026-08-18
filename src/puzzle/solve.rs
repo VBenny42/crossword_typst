@@ -390,7 +390,12 @@ impl PuzzleState {
         };
 
         if guess.len() != clue_info.length {
-            if word_so_far.chars().filter(|c| *c == BLANK_CELL).count() == guess.len() {
+            if guess == "7" {
+                // I can make reveal_clue_answer take an optional direction,
+                // but this is good for now
+                self.reveal_clue_answer(number)?;
+                return Ok(());
+            } else if word_so_far.chars().filter(|c| *c == BLANK_CELL).count() == guess.len() {
                 guess = interweave_guess(&word_so_far, &guess);
             } else {
                 return Err(format!(
