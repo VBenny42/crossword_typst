@@ -311,6 +311,22 @@
     }
   }
 
+  let plain-text(it) = {
+    if type(it) == str {
+      it
+    } else if it == [ ] {
+      " "
+    } else if it.has("children") {
+      it.children.map(plain-text).join()
+    } else if it.has("body") {
+      plain-text(it.body)
+    } else if it.has("text") {
+      if type(it.text) == str { it.text } else { plain-text(it.text) }
+    } else {
+      ""
+    }
+  }
+
   across_clues_array = across_clues_array.sorted(key: x => x.at("solved"))
   down_clues_array = down_clues_array.sorted(key: x => x.at("solved"))
 
@@ -333,111 +349,109 @@
     let linebreak_height = two_line_height - (one_line_height * 2)
 
     let min_items = 19
-    let max_items = 34
-    // Only call measure if there are more than min_items clues, otherwise we don't need to split
-    // Most likely less than min_items clues will fit on the page
+    let max_items = 33
+
+    let max_lines = 33
+    // guess for max chars per line
+    let max_line_chars = 28
 
     let across_split_index = across_clues_array.len()
+
     if across_split_index > min_items {
-      let whole_array_height = available_height + linebreak_height
+      let lines_so_far = 0
+      for (i, clue) in across_clues_array.enumerate() {
+        let clue_chars_len = clue
+          .at("content")
+          .at("children")
+          .at(0)
+          .at("child")
+          .fields()
+          .at("children")
+          .map(plain-text)
+          .join()
+          .len()
 
-      if across_split_index < max_items {
-        whole_array_height = measure(
-          [==== Across
-            #across_clues_array.map(x => x.at("content")).join()
-          ],
-          width: clue_col_width,
-        ).height
-      }
-
-      if whole_array_height > available_height {
-        let header_height = measure(
-          [==== Across
-            #(
-              across_clues_array
-                .slice(0, min_items)
-                .map(x => x.at("content"))
-                .join()
-            )
-          ],
-          width: clue_col_width,
-        ).height
-
-        let running_height = header_height + linebreak_height
-
-        // place(rect(
-        //   width: clue_col_width,
-        //   height: running_height,
-        //   fill: aqua,
-        // ))
-
-        for (i, clue) in across_clues_array.slice(min_items).enumerate() {
+        if clue_chars_len <= max_line_chars {
+          lines_so_far += 1
+        } else {
+          // Only call measure if there are more than min_items clues, otherwise we don't need to split
+          // Most likely less than min_items clues will fit on the page
           let clue_height = measure(
             clue.at("content"),
             width: clue_col_width,
           ).height
-          running_height += clue_height + linebreak_height
-          if running_height > available_height {
-            across_split_index = i + min_items
-            break
+
+          if clue_height > one_line_height and clue_height > two_line_height {
+            // if a clue is more than 4 lines, god help us all
+            if (
+              clue_height
+                > (two_line_height + linebreak_height + one_line_height)
+            ) {
+              // four-line clue
+              lines_so_far += 4
+            } else {
+              // three-line clue
+              lines_so_far += 3
+            }
+          } else if clue_height > one_line_height {
+            // two-line clue
+            lines_so_far += 2
+          } else {
+            // one-line clue; somehow it still fit in one line
+            lines_so_far += 1
           }
+        }
+
+        if lines_so_far > max_lines {
+          across_split_index = i
+          break
         }
       }
     }
 
     let down_split_index = down_clues_array.len()
+
     if down_split_index > min_items {
-      let whole_array_height = available_height + linebreak_height
+      let lines_so_far = 0
+      for (i, clue) in down_clues_array.enumerate() {
+        let clue_chars_len = clue
+          .at("content")
+          .at("children")
+          .at(0)
+          .at("child")
+          .fields()
+          .at("children")
+          .map(plain-text)
+          .join()
+          .len()
 
-      if down_split_index < max_items {
-        whole_array_height = measure(
-          [==== Down
-            #down_clues_array.map(x => x.at("content")).join()
-          ],
-          width: clue_col_width,
-        ).height
-      }
-
-      if whole_array_height > available_height {
-        let header_height = measure(
-          [==== Down
-            #(
-              down_clues_array
-                .slice(0, min_items)
-                .map(x => x.at("content"))
-                .join()
-            )
-          ],
-          width: clue_col_width,
-        ).height
-
-        let running_height = header_height + linebreak_height
-
-        // let m_clue_height = measure(
-        //   down_clues_array.at(min_items).at("content"),
-        //   width: clue_col_width,
-        // ).height
-        //
-        // place(dx: clue_col_width, stack(
-        //   dir: ttb,
-        //   rect(
-        //     width: clue_col_width,
-        //     height: running_height,
-        //     fill: lime,
-        //   ),
-        //   rect(width: clue_col_width, height: m_clue_height, fill: red),
-        // ))
-
-        for (i, clue) in down_clues_array.slice(min_items).enumerate() {
+        if clue_chars_len > max_line_chars {
           let clue_height = measure(
             clue.at("content"),
             width: clue_col_width,
           ).height
-          running_height += clue_height + linebreak_height
-          if running_height > available_height {
-            down_split_index = i + min_items
-            break
+          if clue_height > one_line_height and clue_height > two_line_height {
+            // if a clue is more than 4 lines, god help us all
+            if (
+              clue_height
+                > (two_line_height + linebreak_height + one_line_height)
+            ) {
+              lines_so_far += 4
+            } else {
+              lines_so_far += 3
+            }
+          } else if clue_height > one_line_height {
+            lines_so_far += 2
+          } else {
+            lines_so_far += 1
           }
+        } else {
+          lines_so_far += 1
+        }
+
+        if lines_so_far > max_lines {
+          down_split_index = i
+          break
         }
       }
     }
