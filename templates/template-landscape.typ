@@ -311,22 +311,6 @@
     }
   }
 
-  let plain-text(it) = {
-    if type(it) == str {
-      it
-    } else if it == [ ] {
-      " "
-    } else if it.has("children") {
-      it.children.map(plain-text).join()
-    } else if it.has("body") {
-      plain-text(it.body)
-    } else if it.has("text") {
-      if type(it.text) == str { it.text } else { plain-text(it.text) }
-    } else {
-      ""
-    }
-  }
-
   across_clues_array = across_clues_array.sorted(key: x => x.at("solved"))
   down_clues_array = down_clues_array.sorted(key: x => x.at("solved"))
 
@@ -360,16 +344,27 @@
     if across_split_index > min_items {
       let lines_so_far = 0
       for (i, clue) in across_clues_array.enumerate() {
-        let clue_chars_len = clue
+        let clue_children = clue
           .at("content")
           .at("children")
           .at(0)
           .at("child")
           .fields()
           .at("children")
-          .map(plain-text)
-          .join()
+
+        let clue_num_len = clue_children
+          .at(0)
+          .fields()
+          .at("body")
+          .fields()
+          .at("children")
+          .at(0)
+          .at("text")
           .len()
+        let clue_itself_len = clue_children.at(2).fields().at("text").len()
+
+        // 1 for . after clue_num, another for space between num and clue itself
+        let clue_chars_len = clue_num_len + 1 + 1 + clue_itself_len
 
         if clue_chars_len <= max_line_chars {
           lines_so_far += 1
@@ -414,39 +409,57 @@
     if down_split_index > min_items {
       let lines_so_far = 0
       for (i, clue) in down_clues_array.enumerate() {
-        let clue_chars_len = clue
+        let clue_children = clue
           .at("content")
           .at("children")
           .at(0)
           .at("child")
           .fields()
           .at("children")
-          .map(plain-text)
-          .join()
-          .len()
 
-        if clue_chars_len > max_line_chars {
+        let clue_num_len = clue_children
+          .at(0)
+          .fields()
+          .at("body")
+          .fields()
+          .at("children")
+          .at(0)
+          .at("text")
+          .len()
+        let clue_itself_len = clue_children.at(2).fields().at("text").len()
+
+        // 1 for . after clue_num, another for space between num and clue itself
+        let clue_chars_len = clue_num_len + 1 + 1 + clue_itself_len
+
+        if clue_chars_len <= max_line_chars {
+          lines_so_far += 1
+        } else {
+          // Only call measure if there are more than min_items clues, otherwise we don't need to split
+          // Most likely less than min_items clues will fit on the page
           let clue_height = measure(
             clue.at("content"),
             width: clue_col_width,
           ).height
+
           if clue_height > one_line_height and clue_height > two_line_height {
             // if a clue is more than 4 lines, god help us all
             if (
               clue_height
                 > (two_line_height + linebreak_height + one_line_height)
             ) {
+              // four-line clue
               lines_so_far += 4
             } else {
+              // three-line clue
               lines_so_far += 3
             }
           } else if clue_height > one_line_height {
+            // two-line clue
             lines_so_far += 2
           } else {
+            // one-line clue; somehow it still fit in one line
             lines_so_far += 1
           }
-        } else {
-          lines_so_far += 1
         }
 
         if lines_so_far > max_lines {
