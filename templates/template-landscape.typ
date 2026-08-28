@@ -262,7 +262,7 @@
     let has_star = clue.at(1).starts-with("*")
     if has_star {
       stars_exist = true
-      let (x, y) = coord_to_number.at(clue_num)
+      let (x, y) = coord_to_number.at(int(clue_num))
       star_spots_flat.at(y * puzzle.info.width + x) = true
     }
 
