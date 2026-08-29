@@ -6,12 +6,16 @@ use crate::puzzle::clues::interweave_guess;
 use crate::puzzle::input;
 use crate::types::{BLACK_CELL, BLANK_CELL, Direction, PuzzleState};
 
+const RED_ESC: &str = "\x1b[31m";
+const GREEN_ESC: &str = "\x1b[32m";
+const RESET_ESC: &str = "\x1b[0m";
+
 macro_rules! try_or_continue {
     ($expr:expr, $msg:expr) => {
         match $expr {
             Ok(val) => val,
             Err(e) => {
-                println!("{} {e}", $msg);
+                println!("{RED_ESC}{} {e}{RESET_ESC}", $msg);
                 continue;
             }
         }
@@ -102,7 +106,7 @@ impl PuzzleState {
         loop {
             if !new_solves.is_empty() {
                 println!(
-                    "Solved: {}",
+                    "{GREEN_ESC}Solved: {}{RESET_ESC}",
                     new_solves
                         .iter()
                         .map(|(clue_num, direction)| format!("{clue_num}-{direction}"))
@@ -128,7 +132,7 @@ impl PuzzleState {
             }
 
             if self.puzzle.grid.blank == self.puzzle.grid.solution {
-                println!("Congratulations! You've solved the puzzle!");
+                println!("{GREEN_ESC}Congratulations! You've solved the puzzle!{RESET_ESC}");
                 break;
             }
 
