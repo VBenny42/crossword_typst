@@ -163,11 +163,11 @@
     footer: if puzzle.info.notes != none {
       context {
         let text_size = text.size
-        if puzzle.info.notes.len() > 60 {
+        if puzzle.info.notes.len() > 80 {
           text_size = 0.45 * text_size
         }
         grid(
-          columns: 2,
+          columns: (1fr, auto),
           align: (left, right),
           puzzle.info.author,
           text(style: "italic", size: text_size, puzzle.info.notes),
