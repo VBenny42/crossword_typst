@@ -493,6 +493,41 @@
                     stroke: (paint: foreground_color, thickness: 1pt),
 
                     {
+                      if (
+                        "show_coordinates" in inputs
+                          and (
+                            inputs.show_coordinates == "true"
+                              or inputs.show_coordinates == true
+                          )
+                      ) {
+                        if y == puzzle.info.height - 1 {
+                          place(
+                            bottom + center,
+                            dy: box_unit * 0.3,
+                            text(
+                              weight: "medium",
+                              size: box_unit * 0.35,
+                              str(
+                                x,
+                              ),
+                            ),
+                          )
+                        }
+                        if x == puzzle.info.width - 1 {
+                          place(
+                            horizon + left,
+                            dx: box_unit * 1.05,
+                            text(
+                              weight: "medium",
+                              size: box_unit * 0.35,
+                              str(
+                                y,
+                              ),
+                            ),
+                          )
+                        }
+                      }
+
                       if cell == BLACK_CELL {
                         continue
                       }
