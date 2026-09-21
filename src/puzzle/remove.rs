@@ -101,13 +101,13 @@ impl PuzzleState {
                     .puzzle
                     .clues
                     .across
-                    .get(&u16::from(number))
+                    .get(u16::from(number))
                     .expect("We should have a valid clue at this point"),
                 Direction::Down => self
                     .puzzle
                     .clues
                     .down
-                    .get(&u16::from(number))
+                    .get(u16::from(number))
                     .expect("We should have a valid clue at this point"),
             };
 

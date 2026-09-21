@@ -1,13 +1,13 @@
 [package]
 name = "crossword_typst"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 
 [dependencies]
 clap = { version = "4.6.1", features = ["derive"] }
 directories = "6.0.0"
-# puz-parse = {version= "0.1.2", features = ["json"]}
-puz-parse = {git = "https://github.com/VBenny42/puz.rs.git", branch = "fix-clue-checking", features = ["json"]}
+puz-parse = {git = "https://github.com/mwln/puz.rs", rev = "551ff54cd6a9456df141855d59edc7fd80d356b3", features = ["json"]}
+# puz-parse = {git = "https://github.com/VBenny42/puz.rs.git", branch = "fix-clue-checking", features = ["json"]}
 serde_json = "1.0.150"
 serde = "1.0.228"
 typst = "0.14.2"

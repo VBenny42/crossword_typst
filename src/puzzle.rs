@@ -29,7 +29,6 @@ impl PuzzleState {
                     eprintln!("JSON file does not exist. Creating a new one...");
                     args.output_format.write_puzzle_to_file(
                         &args.output_path,
-                        &args.puzzle_file_path,
                         &puzzle,
                         &clues_info,
                     )?;
@@ -45,7 +44,6 @@ impl PuzzleState {
                     );
                     args.output_format.write_puzzle_to_file(
                         &args.output_path,
-                        &args.puzzle_file_path,
                         &puzzle,
                         &clues_info,
                     )?;
@@ -57,14 +55,24 @@ impl PuzzleState {
         }
 
         if args.show_clue_length {
-            puzzle.clues.across.iter_mut().for_each(|(k, v)| {
-                let clue_info = clues_info.across.get(&(u8::try_from(*k).unwrap())).unwrap();
-                *v = format!("{v} ({})", clue_info.length);
-            });
-            puzzle.clues.down.iter_mut().for_each(|(k, v)| {
-                let clue_info = clues_info.down.get(&(u8::try_from(*k).unwrap())).unwrap();
-                *v = format!("{v} ({})", clue_info.length);
-            });
+            puzzle
+                .clues
+                .across
+                .as_map_mut()
+                .iter_mut()
+                .for_each(|(k, v)| {
+                    let clue_info = clues_info.across.get(&(u8::try_from(*k).unwrap())).unwrap();
+                    *v = format!("{v} ({})", clue_info.length);
+                });
+            puzzle
+                .clues
+                .down
+                .as_map_mut()
+                .iter_mut()
+                .for_each(|(k, v)| {
+                    let clue_info = clues_info.down.get(&(u8::try_from(*k).unwrap())).unwrap();
+                    *v = format!("{v} ({})", clue_info.length);
+                });
         }
 
         Ok(Self {

@@ -233,7 +233,6 @@ impl PuzzleState {
                     println!("Exiting...");
                     self.args.output_format.write_puzzle_to_file(
                         &self.args.output_path,
-                        &self.args.puzzle_file_path,
                         &self.puzzle,
                         &self.clues_info,
                     )?;
@@ -328,7 +327,6 @@ impl PuzzleState {
                 compiler.compile_pdf(self)?;
                 self.args.output_format.write_puzzle_to_file(
                     &self.args.output_path,
-                    &self.args.puzzle_file_path,
                     &self.puzzle,
                     &self.clues_info,
                 )?;
@@ -366,10 +364,9 @@ impl PuzzleState {
             Direction::Down => &self.puzzle.clues.down,
         };
 
-        let clue_text = clues.get(&u16::from(number)).map_or_else(
-            || format!("Unknown clue {number}"),
-            std::clone::Clone::clone,
-        );
+        let clue_text = clues
+            .get(u16::from(number))
+            .ok_or_else(|| format!("Unknown clue {number}"))?;
 
         let (word_so_far, solution_word) = self.get_clue_so_far(number, direction);
 
