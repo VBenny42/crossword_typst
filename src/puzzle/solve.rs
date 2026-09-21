@@ -283,6 +283,9 @@ impl PuzzleState {
 
                     should_recompile = true;
                 }
+                s if let Some((clue_number, direction)) = self.is_solved_clue(s) => {
+                    try_or_continue!(self.display_clue(clue_number, direction), "Display clue:");
+                }
                 s => println!("Invalid choice, please try again. {s}"),
             }
 
@@ -336,6 +339,61 @@ impl PuzzleState {
                 should_recompile = false;
             }
         }
+
+        Ok(())
+    }
+
+    fn is_solved_clue(&self, word: &str) -> Option<(u8, Direction)> {
+        let word = word.to_uppercase();
+        // Assuming each clue is unique
+        for (clue_num, clue_info) in self.clues_info.across.iter() {
+            if clue_info.solved && clue_info.length == word.len() {
+                let (_, solution_word) = self.get_clue_so_far(*clue_num, Direction::Across);
+                if solution_word == word {
+                    return Some((*clue_num, Direction::Across));
+                }
+            }
+        }
+
+        for (clue_num, clue_info) in self.clues_info.down.iter() {
+            if clue_info.solved && clue_info.length == word.len() {
+                let (_, solution_word) = self.get_clue_so_far(*clue_num, Direction::Down);
+                if solution_word == word {
+                    return Some((*clue_num, Direction::Down));
+                }
+            }
+        }
+
+        None
+    }
+
+    fn display_clue(&self, number: u8, direction: Direction) -> Result<(), Box<dyn Error>> {
+        let clue_info = match direction {
+            Direction::Across => self
+                .clues_info
+                .across
+                .get(&number)
+                .ok_or_else(|| format!("Clue number {number} not found in across clues"))?,
+            Direction::Down => self
+                .clues_info
+                .down
+                .get(&number)
+                .ok_or_else(|| format!("Clue number {number} not found in down clues"))?,
+        };
+
+        let clues = match direction {
+            Direction::Across => &self.puzzle.clues.across,
+            Direction::Down => &self.puzzle.clues.down,
+        };
+
+        let clue_text = clues
+            .get(u16::from(number))
+            .ok_or_else(|| format!("Unknown clue {number}"))?;
+
+        println!(
+            "{}. {} ({}), {}.",
+            number, clue_text, clue_info.length, direction
+        );
 
         Ok(())
     }
