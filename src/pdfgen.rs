@@ -128,30 +128,40 @@ impl PdfCompiler {
 #[allow(dead_code)]
 // Append `*` to partially/fully solved clues
 fn edit_clue_text(puzzle: &mut Puzzle, clues_info: &CluesInfo) {
-    puzzle.clues.across.iter_mut().for_each(|(k, v)| {
-        let clue_info = clues_info.across.get(&(u8::try_from(*k).unwrap())).unwrap();
+    puzzle
+        .clues
+        .across
+        .as_map_mut()
+        .iter_mut()
+        .for_each(|(k, v)| {
+            let clue_info = clues_info.across.get(&(u8::try_from(*k).unwrap())).unwrap();
 
-        if puzzle.grid.blank[clue_info.y][clue_info.x..(clue_info.x + clue_info.length)]
-            .chars()
-            .any(|c| c != BLANK_CELL)
-        {
-            *v = format!("{v} *");
-        }
-    });
+            if puzzle.grid.blank[clue_info.y][clue_info.x..(clue_info.x + clue_info.length)]
+                .chars()
+                .any(|c| c != BLANK_CELL)
+            {
+                *v = format!("{v} *");
+            }
+        });
 
-    puzzle.clues.down.iter_mut().for_each(|(k, v)| {
-        let clue_info = clues_info.down.get(&(u8::try_from(*k).unwrap())).unwrap();
+    puzzle
+        .clues
+        .down
+        .as_map_mut()
+        .iter_mut()
+        .for_each(|(k, v)| {
+            let clue_info = clues_info.down.get(&(u8::try_from(*k).unwrap())).unwrap();
 
-        if puzzle
-            .grid
-            .blank
-            .iter()
-            .skip(clue_info.y)
-            .take(clue_info.length)
-            .map(|row| row.chars().nth(clue_info.x).unwrap_or(BLANK_CELL))
-            .any(|c| c != BLANK_CELL)
-        {
-            *v = format!("{v} *");
-        }
-    });
+            if puzzle
+                .grid
+                .blank
+                .iter()
+                .skip(clue_info.y)
+                .take(clue_info.length)
+                .map(|row| row.chars().nth(clue_info.x).unwrap_or(BLANK_CELL))
+                .any(|c| c != BLANK_CELL)
+            {
+                *v = format!("{v} *");
+            }
+        });
 }

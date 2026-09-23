@@ -1,13 +1,7 @@
 use core::fmt;
-use std::{
-    collections::HashMap,
-    error::Error,
-    fs::{self, File},
-    path::PathBuf,
-    str::FromStr,
-};
+use std::{collections::HashMap, error::Error, fs::File, path::PathBuf, str::FromStr};
 
-use puz_parse::Puzzle;
+use puz_parse::{Puzzle, write_file};
 use serde::Serialize;
 
 use crate::Args;
@@ -104,7 +98,6 @@ impl OutputFormat {
     pub fn write_puzzle_to_file(
         self,
         output_path: &PathBuf,
-        puz_path: &PathBuf,
         puzzle: &Puzzle,
         clues_info: &CluesInfo,
     ) -> Result<(), Box<dyn Error>> {
@@ -121,32 +114,7 @@ impl OutputFormat {
                 serde_json::to_writer(clue_info_file, &clues_info)?;
             }
             Self::Puz => {
-                let mut puz_file = fs::read(puz_path)?;
-
-                // .puz format specifies that solution string is at 0x34
-                // and is width x length bytes long,
-                // with the blank string directly after
-                let write_length: usize = puzzle.info.width as usize * puzzle.info.height as usize;
-                let start_position = 0x34 + write_length;
-
-                let blank_string = puzzle.grid.blank.concat();
-
-                assert!(
-                    blank_string.is_ascii(),
-                    "Blank grid should only have ascii chars"
-                );
-                assert_eq!(
-                    blank_string.len(),
-                    write_length,
-                    "Blank grid string length ({}) does not match expected write_length ({})",
-                    blank_string.len(),
-                    write_length
-                );
-
-                puz_file[start_position..start_position + write_length]
-                    .copy_from_slice(blank_string.as_bytes());
-
-                fs::write(output_path, &puz_file)?;
+                write_file(puzzle, output_path)?;
             }
         }
         Ok(())
