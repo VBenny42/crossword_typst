@@ -82,6 +82,8 @@ impl PuzzleState {
         let down_clue_keys = self.clues_info.down.keys().copied().collect::<Vec<_>>();
         self.update_clues_status(&mut new_solves, &across_clue_keys, &down_clue_keys, None);
 
+        let mut first_run = true;
+
         compiler.compile_pdf(self)?;
 
         println!(
@@ -112,6 +114,23 @@ impl PuzzleState {
                         .map(|(clue_num, direction)| format!("{clue_num}-{direction}"))
                         .join(", ")
                 );
+
+                if !first_run {
+                    // Print clue info for clues that were adjacent solves to the actual clue
+                    // solved in the last iteration.
+                    // The actual clue solved will always be the first element in new_solves,
+                    // which gets printed in the solve_clue function from last iteration.
+                    // On the first run all the solved clues in the whole puzzle are in new_solves,
+                    // which would be too much info.
+                    for (clue_num, direction) in new_solves.iter().skip(1) {
+                        println!(
+                            "Adjacent solve: {}",
+                            self.display_clue(*clue_num, *direction)
+                        );
+                    }
+                }
+                first_run = false;
+
                 // update_clues_status also clears the vec,
                 // This clear is to take care of when a guess causes an error
                 // and the loop continues without update_clues_status getting called

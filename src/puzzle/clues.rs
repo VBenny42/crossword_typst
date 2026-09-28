@@ -401,6 +401,41 @@ impl PuzzleState {
             self.update_clue_status(new_solves, *clue_num, Direction::Down);
         }
     }
+
+    pub fn display_clue(&self, clue_number: u8, direction: Direction) -> String {
+        let clue_info = match direction {
+            Direction::Across => self
+                .clues_info
+                .across
+                .get(&clue_number)
+                .expect("Clue number will always be valid"),
+            Direction::Down => self
+                .clues_info
+                .down
+                .get(&clue_number)
+                .expect("Clue number will always be valid"),
+        };
+
+        let clues = match direction {
+            Direction::Across => &self.puzzle.clues.across,
+            Direction::Down => &self.puzzle.clues.down,
+        };
+
+        let clue_text = clues
+            .get(u16::from(clue_number))
+            .expect("Clue number will always be valid");
+
+        let (_, solution_word) = self.get_clue_so_far(clue_number, direction);
+
+        if self.args.show_clue_length {
+            format!("{clue_number}. {clue_text}, {direction}. `{solution_word}`")
+        } else {
+            format!(
+                "{}. {} ({}), {}. `{solution_word}`",
+                clue_number, clue_text, clue_info.length, direction
+            )
+        }
+    }
 }
 
 pub fn interweave_guess(word_so_far: &str, guess: &str) -> String {
