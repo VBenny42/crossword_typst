@@ -151,7 +151,8 @@ impl PuzzleState {
             }
 
             if self.puzzle.grid.blank == self.puzzle.grid.solution {
-                println!("{GREEN_ESC}Congratulations! You've solved the puzzle!{RESET_ESC}");
+                print!("{GREEN_ESC}Congratulations! You've solved the puzzle!{RESET_ESC}");
+                println!();
                 break;
             }
 
@@ -302,7 +303,7 @@ impl PuzzleState {
 
                     should_recompile = true;
                 }
-                s => println!("Invalid choice, please try again. {s}"),
+                s => println!("{RED_ESC}Invalid choice, please try again. {s}{RESET_ESC}"),
             }
 
             if should_recompile {
