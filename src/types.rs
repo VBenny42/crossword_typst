@@ -61,8 +61,8 @@ impl FromStr for Direction {
 }
 
 impl Direction {
-    pub fn alternate(&self) -> Self {
-        match *self {
+    pub fn alternate(self) -> Self {
+        match self {
             Self::Across => Self::Down,
             Self::Down => Self::Across,
         }

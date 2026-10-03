@@ -72,6 +72,7 @@ pub struct Args {
 impl Args {
     /// Parses CLI args, re-deriving `output_path`'s default to match
     /// `output_format` if the user didn't explicitly pass --output-path.
+    #[must_use]
     pub fn parse_with_format_aware_default() -> Self {
         let command = Self::command().mut_arg("output_path", |a| {
 a.hide_default_value(true).help(format!(

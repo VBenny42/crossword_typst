@@ -134,7 +134,7 @@ impl PuzzleState {
                 // update_clues_status also clears the vec,
                 // This clear is to take care of when a guess causes an error
                 // and the loop continues without update_clues_status getting called
-                for (clue_num, direction) in new_solves.iter() {
+                for (clue_num, direction) in &new_solves {
                     let clue_info = self
                         .clues_info
                         .get_mut_clue_info(*clue_num, *direction)

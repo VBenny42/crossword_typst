@@ -220,7 +220,7 @@ impl PuzzleState {
                 }
                 (false, true) => {
                     d_guess_len = d_clue.length;
-                    d_should_interweave = true
+                    d_should_interweave = true;
                 }
                 (false, false) => {
                     // Move on, but don't modify a_guess or d_guess,
@@ -232,7 +232,7 @@ impl PuzzleState {
                     a_guess_len = a_clue.length;
                     d_guess_len = d_clue.length;
                     a_should_interweave = true;
-                    d_should_interweave = true
+                    d_should_interweave = true;
                 }
             }
 
@@ -319,13 +319,13 @@ impl PuzzleState {
                 .get_mut_clue_info(clue_number, direction)
                 .expect("Will always exist");
 
-            if !clue_info.solved {
+            if clue_info.solved {
+                clue_info.new_solve = false;
+            } else {
                 // New solve
                 clue_info.solved = true;
                 clue_info.new_solve = true;
                 new_solves.push((clue_number, direction));
-            } else {
-                clue_info.new_solve = false;
             }
         } else if self
             .clues_info

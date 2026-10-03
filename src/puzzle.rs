@@ -185,7 +185,7 @@ fn extract_clue_info(puzzle: &Puzzle) -> (CluesInfo, Intersections) {
 
                 (0..clue_length).for_each(|i| {
                     if let Some(cell) = clues_intersections[y][x + i].as_mut() {
-                        cell[0] = clue_number
+                        cell[0] = clue_number;
                     } else {
                         // 0 is never used as a clue number, so use as None value
                         let cell = [clue_number, u8::default()];
@@ -234,7 +234,7 @@ fn extract_clue_info(puzzle: &Puzzle) -> (CluesInfo, Intersections) {
 
                 (0..clue_length).for_each(|i| {
                     if let Some(cell) = clues_intersections[y + i][x].as_mut() {
-                        cell[1] = clue_number
+                        cell[1] = clue_number;
                     } else {
                         let cell = [u8::default(), clue_number];
                         clues_intersections[y + i][x] = Some(cell);
