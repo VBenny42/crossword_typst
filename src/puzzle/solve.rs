@@ -118,11 +118,15 @@ impl PuzzleState {
                 if !first_run {
                     // Print clue info for clues that were adjacent solves to the actual clue
                     // solved in the last iteration.
-                    // The actual clue solved will always be the first element in new_solves,
-                    // which gets printed in the solve_clue function from last iteration.
                     // On the first run all the solved clues in the whole puzzle are in new_solves,
                     // which would be too much info.
-                    for (clue_num, direction) in new_solves.iter().skip(1) {
+                    for (clue_num, direction) in &new_solves {
+                        if let Some((updated_clue_num, updated_direction)) = updated_clue
+                            && *clue_num == updated_clue_num
+                            && *direction == updated_direction
+                        {
+                            continue;
+                        }
                         println!(
                             "Adjacent solve: {}",
                             self.display_clue(*clue_num, *direction)
@@ -149,6 +153,8 @@ impl PuzzleState {
                     new_solves.shrink_to(5);
                 }
             }
+
+            updated_clue = None;
 
             if self.puzzle.grid.blank == self.puzzle.grid.solution {
                 print!("{GREEN_ESC}Congratulations! You've solved the puzzle!{RESET_ESC}");
@@ -315,7 +321,7 @@ impl PuzzleState {
                     &down_clue_keys,
                     updated_clue,
                 );
-                updated_clue = None;
+                // updated_clue = None;
 
                 // If there any blanks left after solve, the last solve should still be set
                 last_solve.not_solved = !self
